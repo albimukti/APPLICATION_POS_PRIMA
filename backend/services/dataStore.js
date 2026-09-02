@@ -72,8 +72,53 @@ class DataStore {
   }
 
   // ================= APPROVAL METHODS =================
+  syncPendingCustomerApprovals() {
+    if (!this.customers || !Array.isArray(this.customers)) return;
+    this.customers.forEach(cust => {
+      const exists = this.approvals.some(a =>
+        a.type === 'CUSTOMER_REGISTRATION' &&
+        (a.data?.id === cust.id || a.data?.phone === cust.phone || a.requesterId === cust.id)
+      );
+      if (!exists) {
+        const associatedUser = this.users.find(u => u.username === cust.phone || u.phone === cust.phone || u.id === `usr-${cust.id}`);
+        const loginUsername = associatedUser ? associatedUser.username : cust.phone;
+        const newApproval = {
+          id: `appr-cust-${cust.id}`,
+          type: 'CUSTOMER_REGISTRATION',
+          title: `Pendaftaran Member Baru: ${cust.name} (${cust.phone})`,
+          requesterName: cust.name,
+          requesterRole: 'customer',
+          requesterId: cust.id,
+          data: {
+            id: cust.id,
+            userId: associatedUser ? associatedUser.id : null,
+            username: loginUsername,
+            name: cust.name,
+            email: cust.email || '',
+            phone: cust.phone,
+            tier: cust.tier || 'Silver',
+            points: cust.points || 50,
+            role: 'customer'
+          },
+          status: 'PENDING',
+          requiredRole: 'any',
+          category: 'Member & Loyalitas',
+          details: `Pendaftaran akun member/pelanggan baru (${cust.name} - ${cust.phone}). Menunggu verifikasi persetujuan oleh Kasir atau Administrator.`,
+          createdAt: cust.createdAt || new Date().toISOString(),
+          reviewedBy: null,
+          reviewedAt: null,
+          reviewNotes: ''
+        };
+        this.approvals.unshift(newApproval);
+      }
+    });
+  }
+
   getApprovals(user) {
     if (!user) return [];
+    // Ensure all registered customers have approval items
+    this.syncPendingCustomerApprovals();
+
     if (user.role === 'admin') {
       // Admin has full visibility over all approvals
       return this.approvals;
@@ -163,11 +208,11 @@ class DataStore {
         });
       }
     } else if (item.type === 'CUSTOMER_REGISTRATION' && item.data) {
-      // Ensure customer exists in customers array
-      let existingCust = this.customers.find(c => c.phone === item.data.phone || c.name === item.data.name);
+      // Ensure customer exists and activate in customers array
+      let existingCust = this.customers.find(c => (item.data.id && c.id === item.data.id) || (item.data.phone && c.phone === item.data.phone) || c.name === item.data.name);
       if (!existingCust) {
         this.customers.push({
-          id: `cust-${Date.now()}`,
+          id: item.data.id || `cust-${Date.now()}`,
           name: item.data.name,
           phone: item.data.phone,
           email: item.data.email || '',
@@ -175,8 +220,18 @@ class DataStore {
           points: item.data.points || 50,
           totalSpent: 0,
           transactionCount: 0,
+          isActive: true,
           createdAt: new Date().toISOString()
         });
+      } else {
+        existingCust.isActive = true;
+      }
+
+      // Activate user login account if exists
+      const username = item.data.username || item.data.phone;
+      let targetUser = this.users.find(u => u.username === username || u.phone === item.data.phone || (item.data.userId && u.id === item.data.userId));
+      if (targetUser) {
+        targetUser.isActive = true;
       }
     }
 
@@ -213,6 +268,23 @@ class DataStore {
     item.reviewedBy = `${user.name} (${user.role.toUpperCase()})`;
     item.reviewedAt = new Date().toISOString();
     item.reviewNotes = reason || 'Permohonan ditolak oleh reviewer';
+
+    if (item.type === 'CASHIER_REGISTRATION' && item.data) {
+      let targetUser = this.users.find(u => u.username === item.data.username);
+      if (targetUser && !targetUser.isActive) {
+        targetUser.isActive = false;
+      }
+    } else if (item.type === 'CUSTOMER_REGISTRATION' && item.data) {
+      let existingCust = this.customers.find(c => (item.data.id && c.id === item.data.id) || (item.data.phone && c.phone === item.data.phone));
+      if (existingCust && !existingCust.isActive) {
+        existingCust.isActive = false;
+      }
+      const username = item.data.username || item.data.phone;
+      let targetUser = this.users.find(u => u.username === username || (item.data.userId && u.id === item.data.userId));
+      if (targetUser && !targetUser.isActive) {
+        targetUser.isActive = false;
+      }
+    }
 
     this.addAuditLog({
       userId: user.id,
@@ -1000,7 +1072,14 @@ class DataStore {
 
   // ================= EMPLOYEES (#14) =================
   getEmployees() {
+    if (!this.employees || this.employees.length === 0) {
+      this.employees = JSON.parse(JSON.stringify(initialData.initialEmployees));
+    }
     return this.employees;
+  }
+
+  getEmployeeById(id) {
+    return this.employees.find(e => e.id === id);
   }
 
   clockInEmployee(id) {
@@ -1018,6 +1097,44 @@ class DataStore {
     const now = new Date();
     emp.clockOutTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     return emp;
+  }
+
+  createEmployee(data) {
+    const newEmp = {
+      id: `emp-${Date.now()}`,
+      employeeCode: data.employeeCode || `EMP-${String(this.employees.length + 1).padStart(3, '0')}`,
+      name: data.name,
+      position: data.position || 'Staff Operasional',
+      department: data.department || 'Operasional',
+      phone: data.phone || '',
+      email: data.email || '',
+      basicSalary: parseFloat(data.basicSalary) || 3500000,
+      allowance: parseFloat(data.allowance) || 500000,
+      commissionRate: parseFloat(data.commissionRate) || 1.5,
+      todayAttendance: data.todayAttendance || 'BELUM_ABSEN',
+      clockInTime: null,
+      clockOutTime: null,
+      avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
+      joinDate: data.joinDate || new Date().toISOString().slice(0, 10),
+      bankAccount: data.bankAccount || '',
+      status: 'ACTIVE'
+    };
+    this.employees.push(newEmp);
+    return newEmp;
+  }
+
+  updateEmployee(id, data) {
+    const idx = this.employees.findIndex(e => e.id === id);
+    if (idx === -1) throw new Error('Karyawan tidak ditemukan');
+    this.employees[idx] = { ...this.employees[idx], ...data };
+    return this.employees[idx];
+  }
+
+  deleteEmployee(id) {
+    const idx = this.employees.findIndex(e => e.id === id);
+    if (idx === -1) throw new Error('Karyawan tidak ditemukan');
+    const deleted = this.employees.splice(idx, 1)[0];
+    return deleted;
   }
 
   // ================= NOTIFICATIONS (#15) =================

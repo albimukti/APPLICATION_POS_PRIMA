@@ -224,21 +224,21 @@ function RegisterModal({ onClose, registerType, onRegisterCustomer, onRegisterCa
                     width: '60px',
                     height: '60px',
                     borderRadius: '50%',
-                    background: '#DCFCE7',
-                    color: '#059669',
+                    background: '#FEF3C7',
+                    color: '#D97706',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 16px'
                   }}
                 >
-                  <CheckCircle2 size={32} />
+                  <Clock size={32} />
                 </div>
                 <h3 style={{ color: '#0F172A', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px' }}>
-                  Akun Member Berhasil Dibuat!
+                  Menunggu Persetujuan Kasir / Admin
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 24px 0' }}>
-                  Selamat! Akun member Anda telah aktif dan siap digunakan untuk mendapatkan promo serta poin loyalitas.
+                  Permohonan pendaftaran akun member Anda telah terkirim ke Pusat Approval. Kasir atau Administrator akan memverifikasi dan mengaktifkan akun Anda sebelum dapat digunakan login.
                 </p>
               </>
             )}
@@ -285,7 +285,7 @@ function RegisterModal({ onClose, registerType, onRegisterCustomer, onRegisterCa
                   {isCashier ? 'Daftar Akun Kasir' : 'Daftar Member Baru'}
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.8125rem', marginTop: '4px', margin: '4px 0 0 0' }}>
-                  {isCashier ? '⚠️ Memerlukan persetujuan Administrator sebelum aktif.' : '✅ Akun member langsung aktif dan siap digunakan.'}
+                  {isCashier ? '⚠️ Memerlukan persetujuan Administrator sebelum aktif.' : '⏳ Memerlukan verifikasi persetujuan Kasir / Admin sebelum aktif.'}
                 </p>
               </div>
               <button
@@ -534,8 +534,8 @@ export default function LoginScreen() {
   };
 
   const handleRegisterCustomer = async (data) => {
-    await registerCustomer(data);
-    showToast('Akun member berhasil dibuat! Silakan login.', 'success');
+    const res = await registerCustomer(data);
+    showToast(res?.message || 'Permohonan akun member berhasil dikirim ke Pusat Approval!', 'success');
   };
 
   const handleRegisterCashier = async (data) => {

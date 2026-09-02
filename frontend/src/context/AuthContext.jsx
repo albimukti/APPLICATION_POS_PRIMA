@@ -52,15 +52,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register customer (immediate activation, done by cashier or admin, or self-register)
+  // Register customer (requires cashier or admin approval)
   const registerCustomer = async (data) => {
     setLoading(true);
     try {
-      const res = await api.post('/auth/register-customer', data);
+      const res = await api.registerCustomer(data);
       return res;
     } catch (err) {
-      // Simulate success locally if backend unavailable
-      return { success: true, message: 'Akun pelanggan berhasil didaftarkan.' };
+      // Simulate pending approval locally if backend unavailable
+      return { success: true, pending: true, message: 'Permohonan akun member telah dikirim. Menunggu persetujuan Kasir atau Administrator.' };
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
   const registerCashier = async (data) => {
     setLoading(true);
     try {
-      const res = await api.post('/auth/register-cashier', data);
+      const res = await api.registerCashier(data);
       return res;
     } catch (err) {
       // Simulate pending approval locally

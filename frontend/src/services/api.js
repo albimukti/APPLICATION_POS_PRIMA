@@ -29,9 +29,17 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // Generic request helpers
+  post: (endpoint, data) => request(endpoint, { method: 'POST', body: JSON.stringify(data) }),
+  get: (endpoint) => request(endpoint),
+  put: (endpoint, data) => request(endpoint, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (endpoint) => request(endpoint, { method: 'DELETE' }),
+
   // Auth (#13)
   login: (username, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
   switchRole: (role) => request('/auth/switch-role', { method: 'POST', body: JSON.stringify({ role }) }),
+  registerCustomer: (data) => request('/auth/register-customer', { method: 'POST', body: JSON.stringify(data) }),
+  registerCashier: (data) => request('/auth/register-cashier', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => request('/auth/me'),
   updateProfile: (data) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
 
@@ -114,6 +122,9 @@ export const api = {
   getEmployees: () => request('/employees'),
   clockInEmployee: (id) => request(`/employees/${id}/clock-in`, { method: 'POST' }),
   clockOutEmployee: (id) => request(`/employees/${id}/clock-out`, { method: 'POST' }),
+  createEmployee: (data) => request('/employees', { method: 'POST', body: JSON.stringify(data) }),
+  updateEmployee: (id, data) => request(`/employees/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEmployee: (id) => request(`/employees/${id}`, { method: 'DELETE' }),
 
   // Notifications (#15)
   getNotifications: () => request('/notifications'),

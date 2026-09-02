@@ -125,10 +125,10 @@ router.post('/register-cashier', (req, res) => {
   }
 });
 
-// POST /api/auth/register-customer (Can be registered & approved by Cashier or Admin)
+// POST /api/auth/register-customer (Requires Cashier or Admin Approval)
 router.post('/register-customer', (req, res) => {
   try {
-    const { name, phone, email, password } = req.body;
+    const { name, phone, email, password, username } = req.body;
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Nama dan nomor HP wajib diisi' });
     }
@@ -138,8 +138,15 @@ router.post('/register-customer', (req, res) => {
       return res.status(400).json({ success: false, message: 'Nomor telepon sudah terdaftar sebagai member' });
     }
 
+    const loginUsername = username && username.trim() ? username.trim() : phone;
+    const existingUser = dataStore.getUserByUsername(loginUsername);
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Username sudah digunakan oleh akun lain' });
+    }
+
+    const newCustId = `cust-${Date.now()}`;
     const newCust = {
-      id: `cust-${Date.now()}`,
+      id: newCustId,
       name,
       phone,
       email: email || '',
@@ -147,42 +154,68 @@ router.post('/register-customer', (req, res) => {
       points: 50, // Welcome bonus
       totalSpent: 0,
       transactionCount: 0,
+      isActive: false, // Inactive until approved by Cashier or Admin!
       createdAt: new Date().toISOString()
     };
 
     dataStore.customers.push(newCust);
 
+    let newUserId = null;
     // Also register user login account if password provided
     if (password) {
       const salt = bcrypt.genSaltSync(10);
-      const username = phone;
+      newUserId = `usr-${newCust.id}`;
       dataStore.users.push({
-        id: `usr-${newCust.id}`,
-        username,
+        id: newUserId,
+        username: loginUsername,
         name,
-        email: email || `${phone}@customer.id`,
+        email: email || `${loginUsername}@customer.id`,
         password: bcrypt.hashSync(password, salt),
         role: 'customer',
-        isActive: true, // Customer is directly active
+        isActive: false, // Inactive until approved by Cashier or Admin!
         phone,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${loginUsername}`,
         createdAt: new Date().toISOString()
       });
     }
 
+    // Create approval request for Cashier or Admin
+    const approval = dataStore.createApprovalRequest({
+      type: 'CUSTOMER_REGISTRATION',
+      title: `Pendaftaran Member Baru: ${name} (${phone})`,
+      requesterName: name,
+      requesterRole: 'customer',
+      requesterId: newCust.id,
+      data: {
+        id: newCust.id,
+        userId: newUserId,
+        username: loginUsername,
+        name,
+        email: email || '',
+        phone,
+        tier: 'Silver',
+        points: 50,
+        role: 'customer'
+      },
+      details: `Pendaftaran akun member/pelanggan baru (${name} - ${phone}) dengan welcome bonus 50 poin. Menunggu persetujuan aktivasi oleh Kasir atau Administrator.`,
+      requiredRole: 'any'
+    });
+
     dataStore.addAuditLog({
-      userId: req.user ? req.user.id : 'self-register',
-      username: req.user ? req.user.name : name,
-      role: req.user ? req.user.role : 'customer',
+      userId: newCust.id,
+      username: name,
+      role: 'customer',
       action: 'CUSTOMER_REGISTERED',
       target: newCust.id,
-      details: `Pendaftaran member baru: ${name} (${phone}) dengan bonus 50 poin.`,
+      details: `Pendaftaran member baru diajukan: ${name} (${phone}). Menunggu persetujuan (approval) Kasir atau Administrator.`,
       severity: 'INFO'
     });
 
     res.status(201).json({
       success: true,
-      message: 'Akun member berhasil didaftarkan dan langsung aktif.',
+      pending: true,
+      message: 'Pendaftaran akun member berhasil diajukan. Menunggu persetujuan (approval) dari Kasir atau Administrator.',
+      approvalId: approval.id,
       customer: newCust
     });
   } catch (err) {

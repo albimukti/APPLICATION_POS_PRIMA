@@ -64,11 +64,19 @@ app.use((err, req, res, next) => {
 // Start Server & Database
 async function startServer() {
   await initPostgres();
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`=================================================`);
     console.log(`🚀 POS Backend Server berjalan di http://localhost:${PORT}`);
     console.log(`📦 Siap melayani 16 Modul POS dengan RBAC (Admin, Kasir, Customer)`);
     console.log(`=================================================`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[Server Error] Port ${PORT} sedang digunakan. Harap pastikan tidak ada server backend lain yang berjalan.`);
+    } else {
+      console.error('[Server Error]', err);
+    }
   });
 }
 

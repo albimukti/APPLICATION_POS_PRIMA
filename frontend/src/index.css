@@ -730,3 +730,106 @@ html, body {
   0%, 100% { box-shadow: 0 0 10px rgba(5, 150, 105, 0.2); }
   50% { box-shadow: 0 0 20px rgba(5, 150, 105, 0.45); }
 }
+
+/* ===================================================
+   ENTERPRISE FORM CONTROLS & INPUT SYSTEM
+   =================================================== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.form-label-subtle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.input,
+.form-input,
+select.input,
+select.form-input,
+textarea.input,
+textarea.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  font-family: var(--font-main);
+  color: var(--text-main);
+  background-color: var(--bg-tertiary);
+  border: 1.5px solid var(--border-glass-strong);
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.input:hover,
+.form-input:hover {
+  border-color: rgba(5, 150, 105, 0.35);
+  background-color: var(--bg-secondary);
+}
+
+.input:focus,
+.form-input:focus {
+  border-color: var(--emerald-500);
+  background-color: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
+}
+
+.input::placeholder,
+.form-input::placeholder {
+  color: var(--text-subtle);
+  opacity: 0.75;
+}
+
+select.input,
+select.form-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+select.input option,
+select.form-input option {
+  background-color: var(--bg-secondary);
+  color: var(--text-main);
+  padding: 8px;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-icon .input-icon-left {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon input,
+.input-with-icon select {
+  padding-left: 38px;
+}
+

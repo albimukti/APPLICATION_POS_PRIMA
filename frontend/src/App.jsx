@@ -40,23 +40,22 @@ const allowedKeysByRole = {
   admin: [
     'dashboard', 'transactions', 'inventory', 'products', 'customers',
     'payments', 'promos', 'reports', 'users', 'shifts',
-    'receipts', 'loyalty', 'settings', 'auth', 'employees',
-    'notifications', 'module_management', 'audit_logs', 'approvals'
+    'receipts', 'loyalty', 'settings', 'employees',
+    'module_management', 'audit_logs', 'approvals'
   ],
   cashier: [
     'transactions', 'shifts', 'receipts', 'products', 'inventory',
     'customers', 'payments', 'promos', 'loyalty', 'reports',
-    'notifications', 'auth', 'approvals'
+    'approvals'
   ],
   customer: [
-    'customers', 'products', 'promos', 'receipts', 'loyalty',
-    'notifications', 'auth'
+    'customers', 'products', 'promos', 'receipts', 'loyalty'
   ]
 };
 
 function AppContent() {
   const { user } = useAuth();
-  const { isModuleActive } = useModules();
+  const { isModuleActive, fetchModules } = useModules();
   const { activeShift, openShift, closeShift } = useShift();
 
   // Set default initial tab based on role
@@ -74,15 +73,16 @@ function AppContent() {
   const [shiftNotes, setShiftNotes] = useState('');
   const [isSubmittingShift, setIsSubmittingShift] = useState(false);
 
-  // When user role changes (e.g. login or logout), adjust activeTab
+  // When user role changes (e.g. login or logout), adjust activeTab & ensure modules are up-to-date
   useEffect(() => {
     if (user) {
+      if (fetchModules) fetchModules();
       const allowed = allowedKeysByRole[user.role] || allowedKeysByRole.customer;
       if (!allowed.includes(activeTab)) {
         setActiveTab(getDefaultTabForRole(user.role));
       }
     }
-  }, [user]);
+  }, [user, fetchModules]);
 
   // If user is not logged in, show LoginScreen
   if (!user) {

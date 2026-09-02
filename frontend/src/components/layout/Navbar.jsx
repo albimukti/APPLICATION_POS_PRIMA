@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useShift } from '../../context/ShiftContext';
@@ -37,11 +38,50 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
   const appName = settings?.store?.appName || 'POS PRIMA';
   const appSubtitle = settings?.store?.appSubtitle || 'Sistem Kasir 16 Modul';
 
-  const notifications = [
-    { id: 1, title: 'Stok Kopi Arabika Menipis', time: '10 mnt lalu', type: 'warning' },
-    { id: 2, title: 'Penjualan Hari Ini Melebihi Rp 2 Jt', time: '1 jam lalu', type: 'success' },
-    { id: 3, title: 'Modul Manajemen Siap Digunakan', time: '3 jam lalu', type: 'info' }
-  ];
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Pusat Approval Aktif', message: 'Permohonan pendaftaran & otorisasi kasir termonitor secara real-time', time: 'Baru saja', type: 'info', isRead: false },
+    { id: 2, title: 'Stok Kopi Arabika Menipis', message: 'Sisa stok 10 pack, segera jadwalkan restock logistik', time: '15 mnt lalu', type: 'warning', isRead: false },
+    { id: 3, title: 'Shift Kasir Berjalan Normal', message: 'Sesi kasir aktif dan tercatat di audit log', time: '1 jam lalu', type: 'success', isRead: true }
+  ]);
+
+  const fetchNotifs = async () => {
+    try {
+      const res = await api.getNotifications();
+      if (res && res.success && Array.isArray(res.notifications) && res.notifications.length > 0) {
+        setNotifications(res.notifications.map(n => ({
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          time: new Date(n.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          type: n.type === 'WARNING' ? 'warning' : n.type === 'SUCCESS' ? 'success' : 'info',
+          isRead: Boolean(n.isRead)
+        })));
+      }
+    } catch (err) {
+      // Keep existing
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 12000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const handleMarkItemRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    try {
+      api.markNotificationRead(id);
+    } catch (err) {
+      // Quiet
+    }
+  };
 
   return (
     <header className="glass-header" style={{ height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', zIndex: 40 }}>
@@ -240,17 +280,31 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
             onClick={() => setShowNotifications(!showNotifications)}
             className="btn-icon btn-secondary"
             style={{ position: 'relative', width: '36px', height: '36px' }}
+            title="Notifikasi Sistem"
           >
             <Bell size={17} />
-            <span style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: 'var(--rose-500)'
-            }} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: '#ffffff',
+                fontSize: '0.625rem',
+                fontWeight: 800,
+                minWidth: '17px',
+                height: '17px',
+                borderRadius: '999px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 3px',
+                boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)',
+                border: '1.5px solid var(--bg-primary)'
+              }}>
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           {showNotifications && (
@@ -258,28 +312,66 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
               position: 'absolute',
               right: 0,
               top: '46px',
-              width: '300px',
+              width: '320px',
               padding: '14px',
               zIndex: 50,
+              boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
+              borderRadius: 'var(--radius-lg)',
               animation: 'scaleUp 0.2s ease'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700 }}>Notifikasi Sistem</h4>
-                <span className="badge badge-indigo">3 Baru</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Bell size={15} style={{ color: 'var(--emerald-500)' }} />
+                  <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700 }}>Notifikasi Sistem</h4>
+                </div>
+                {unreadCount > 0 ? (
+                  <button
+                    onClick={handleMarkAllRead}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--emerald-500)',
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    Tandai Semua Dibaca
+                  </button>
+                ) : (
+                  <span className="badge badge-success" style={{ fontSize: '0.625rem' }}>Semua Terbaca</span>
+                )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
                 {notifications.map(n => (
-                  <div key={n.id} style={{
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-glass)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px'
-                  }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)' }}>{n.title}</span>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{n.time}</span>
+                  <div
+                    key={n.id}
+                    onClick={() => handleMarkItemRead(n.id)}
+                    style={{
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      background: n.isRead ? 'var(--bg-tertiary)' : 'rgba(99, 102, 241, 0.08)',
+                      border: n.isRead ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.25)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '3px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: n.isRead ? 'var(--text-main)' : 'var(--emerald-500)' }}>
+                        {n.title}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{n.time}</span>
+                    </div>
+                    {n.message && (
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                        {n.message}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

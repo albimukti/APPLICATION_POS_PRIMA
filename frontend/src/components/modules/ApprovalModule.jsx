@@ -74,9 +74,9 @@ export default function ApprovalModule() {
   const isAdmin = user?.role === 'admin';
   const isCashier = user?.role === 'cashier';
 
-  const fetchApprovals = async () => {
+  const fetchApprovals = async (silent = false) => {
     try {
-      setIsRefreshing(true);
+      if (!silent) setIsRefreshing(true);
       const res = await api.getApprovals();
       if (res && res.success) {
         setApprovals(res.approvals || []);
@@ -92,12 +92,16 @@ export default function ApprovalModule() {
       console.error('Failed to fetch approvals:', err);
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchApprovals();
+    const interval = setInterval(() => {
+      fetchApprovals(true);
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   const showToast = (msg, isError = false) => {

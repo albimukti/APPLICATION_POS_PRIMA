@@ -3,8 +3,8 @@ const router = express.Router();
 const dataStore = require('../services/dataStore');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
-// GET /api/modules (Accessible by authenticated users, used to render sidebar & permissions)
-router.get('/', authenticateToken, (req, res) => {
+// GET /api/modules (Public metadata: used to render sidebar, navigation & module status)
+router.get('/', (req, res) => {
   try {
     const modules = dataStore.getModules();
     const stats = dataStore.getModuleStats();

@@ -1,22 +1,24 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { useAuth } from './AuthContext';
+import { DEFAULT_MODULES } from '../utils/defaultModules';
 
 const ModuleContext = createContext(null);
 
 export function ModuleProvider({ children }) {
-  const [modules, setModules] = useState([]);
+  const { user, token } = useAuth();
+  const [modules, setModules] = useState(DEFAULT_MODULES);
   const [stats, setStats] = useState({ total: 16, active: 16, inactive: 0 });
   const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState(null);
 
   const fetchModules = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await api.getModules();
-      if (res.success) {
+      if (res && res.success && Array.isArray(res.modules) && res.modules.length > 0) {
         setModules(res.modules);
-        setStats(res.stats);
+        if (res.stats) setStats(res.stats);
       }
     } catch (err) {
       console.error('Failed to fetch modules:', err);
@@ -28,18 +30,21 @@ export function ModuleProvider({ children }) {
   const fetchHistory = useCallback(async () => {
     try {
       const res = await api.getModuleHistory();
-      if (res.success) {
-        setHistory(res.history);
+      if (res && res.success) {
+        setHistory(res.history || []);
       }
     } catch (err) {
-      console.error('Failed to fetch history:', err);
+      // Quiet fail if not logged in or history unavailable
     }
   }, []);
 
+  // Fetch immediately and whenever user or token changes (e.g. on login/logout)
   useEffect(() => {
     fetchModules();
-    fetchHistory();
-  }, [fetchModules, fetchHistory]);
+    if (token) {
+      fetchHistory();
+    }
+  }, [user, token, fetchModules, fetchHistory]);
 
   const toggleModule = async (moduleId, targetStatus, reason = '') => {
     try {

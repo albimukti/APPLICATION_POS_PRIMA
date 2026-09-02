@@ -4,6 +4,7 @@ import { useModules } from '../../context/ModuleContext';
 import { useShift } from '../../context/ShiftContext';
 import { useSettings } from '../../context/SettingsContext';
 import { formatRupiah } from '../../utils/formatters';
+import { DEFAULT_MODULES } from '../../utils/defaultModules';
 import {
   ShoppingBag,
   Layers,
@@ -65,17 +66,16 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
     admin: [
       'dashboard', 'transactions', 'inventory', 'products', 'customers',
       'payments', 'promos', 'reports', 'users', 'shifts',
-      'receipts', 'loyalty', 'settings', 'auth', 'employees',
-      'notifications', 'module_management', 'audit_logs', 'approvals'
+      'receipts', 'loyalty', 'settings', 'employees',
+      'module_management', 'audit_logs', 'approvals'
     ],
     cashier: [
       'transactions', 'shifts', 'receipts', 'products', 'inventory',
       'customers', 'payments', 'promos', 'loyalty', 'reports',
-      'notifications', 'auth', 'approvals'
+      'approvals'
     ],
     customer: [
-      'customers', 'products', 'promos', 'receipts', 'loyalty',
-      'notifications', 'auth'
+      'customers', 'products', 'promos', 'receipts', 'loyalty'
     ]
   };
 
@@ -114,6 +114,8 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
     return defaultCat;
   };
 
+  const effectiveModules = (modules && modules.length > 0) ? modules : DEFAULT_MODULES;
+
   const menuList = [
     ...(currentRole === 'admin' ? [{
       id: 'dashboard',
@@ -123,7 +125,8 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
       category: 'Overview',
       isActive: true
     }] : []),
-    ...modules
+    ...effectiveModules
+      .filter(m => m.key !== 'auth' && m.key !== 'notifications')
       .filter(m => roleAllowed.includes(m.key))
       .map(m => ({
         ...m,
