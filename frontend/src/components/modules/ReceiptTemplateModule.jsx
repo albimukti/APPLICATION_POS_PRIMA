@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { Receipt, Save, CheckCircle2, Eye, Printer } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Receipt, Save, CheckCircle2, Eye, Printer, ShieldAlert } from 'lucide-react';
 
 export default function ReceiptTemplateModule() {
+  const { user } = useAuth();
   const [template, setTemplate] = useState({
     storeName: 'POS PRIMA INDONESIA',
     tagline: 'Smart & Modern POS System',
@@ -47,6 +49,20 @@ export default function ReceiptTemplateModule() {
       alert('Gagal menyimpan template struk');
     }
   };
+
+  if (user?.role !== 'admin') {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', maxWidth: '650px', margin: '60px auto' }} className="glass-panel">
+        <ShieldAlert size={56} style={{ color: 'var(--rose-500)', margin: '0 auto 16px' }} />
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--rose-500)', marginBottom: '8px' }}>
+          Akses Ditolak: Khusus Administrator
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
+          Fitur edit dan kustomisasi template struk toko hanya berhak diakses oleh <b>Administrator</b>. Kasir dan Customer dilarang mengubah pengaturan struk.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>

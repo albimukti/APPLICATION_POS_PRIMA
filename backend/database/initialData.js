@@ -122,7 +122,7 @@ const initialModules = [
     isActive: true,
     isCore: false,
     dependencies: ['transactions'],
-    permissions: { admin: 'full', cashier: 'full', customer: 'read' }
+    permissions: { admin: 'full', cashier: 'none', customer: 'none' }
   },
   {
     id: 11,

@@ -18,7 +18,9 @@ import {
   Eye,
   CreditCard,
   ShoppingBag,
-  Check
+  Check,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 export default function ProductModule() {
@@ -33,6 +35,7 @@ export default function ProductModule() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [completedTrx, setCompletedTrx] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewMode, setViewMode] = useState(user?.role === 'admin' ? 'table' : 'grid');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -205,138 +208,382 @@ export default function ProductModule() {
           ))}
         </div>
 
-        <div style={{ position: 'relative', width: '280px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            className="form-input"
-            style={{ paddingLeft: '36px' }}
-            placeholder="Cari nama, SKU, barcode..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ position: 'relative', width: '280px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="form-input"
+              style={{ paddingLeft: '36px' }}
+              placeholder="Cari nama, SKU, barcode..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* View Mode Toggle: Grid Kartu Besar vs Tabel */}
+          <div style={{
+            display: 'flex',
+            background: 'var(--bg-tertiary)',
+            padding: '3px',
+            borderRadius: '9px',
+            border: '1px solid var(--border-glass)'
+          }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              title="Tampilan Grid Kartu Besar"
+              style={{
+                padding: '7px 11px',
+                borderRadius: '6px',
+                background: viewMode === 'grid' ? 'var(--bg-secondary)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'grid' ? 'var(--emerald-500)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <LayoutGrid size={17} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              title="Tampilan Tabel Rinci"
+              style={{
+                padding: '7px 11px',
+                borderRadius: '6px',
+                background: viewMode === 'table' ? 'var(--bg-secondary)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'table' ? 'var(--emerald-500)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <List size={17} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Products Table with + - Cart Stepper & Actions */}
-      <div className="glass-panel" style={{ padding: '20px', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-glass-strong)', textAlign: 'left', color: 'var(--text-muted)' }}>
-              <th style={{ padding: '12px' }}>Produk</th>
-              <th style={{ padding: '12px' }}>SKU / Barcode</th>
-              <th style={{ padding: '12px' }}>Kategori</th>
-              {user?.role === 'admin' && <th style={{ padding: '12px' }}>Harga Modal</th>}
-              <th style={{ padding: '12px' }}>Harga Jual</th>
-              <th style={{ padding: '12px' }}>Stok</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>Pesan (+ / -)</th>
-              {user?.role === 'admin' && <th style={{ padding: '12px', textAlign: 'center' }}>Aksi Admin</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(p => {
-              const cartItem = items.find(i => i.id === p.id);
-              const inCartQty = cartItem ? cartItem.quantity : 0;
-              const isOutOfStock = p.stock <= 0;
+      {/* VIEW 1: ENLARGED CARD GRID (FOR CASHIER & CUSTOMER) */}
+      {viewMode === 'grid' ? (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: '20px'
+        }}>
+          {filtered.map(p => {
+            const cartItem = items.find(i => i.id === p.id);
+            const inCartQty = cartItem ? cartItem.quantity : 0;
+            const isOutOfStock = p.stock <= 0;
+            const isLowStock = p.stock <= p.minStockAlert;
 
-              return (
-                <tr key={p.id} style={{ borderBottom: '1px solid var(--border-glass)', background: inCartQty > 0 ? 'rgba(16, 185, 129, 0.04)' : 'transparent' }}>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover' }}
-                      />
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.description?.slice(0, 35)}...</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{p.sku}</div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.barcode || '-'}</span>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{p.categoryName}</td>
-                  {user?.role === 'admin' && <td style={{ padding: '12px' }}>{formatRupiah(p.costPrice)}</td>}
-                  <td style={{ padding: '12px', fontWeight: 800, color: 'var(--emerald-500)' }}>{formatRupiah(p.price)}</td>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>
-                    <span className={`badge ${isOutOfStock ? 'badge-danger' : 'badge-success'}`}>
-                      {isOutOfStock ? 'Habis' : `${p.stock} ${p.unit}`}
+            return (
+              <div
+                key={p.id}
+                className="glass-panel glass-panel-hover"
+                style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  border: inCartQty > 0 ? '2px solid var(--emerald-500)' : '1px solid var(--border-glass-strong)',
+                  background: inCartQty > 0 ? 'rgba(16, 185, 129, 0.04)' : 'var(--bg-card)',
+                  boxShadow: inCartQty > 0 ? '0 4px 16px rgba(5, 150, 105, 0.22)' : 'var(--shadow-sm)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div>
+                  {/* Big 180px Image for High Clarity */}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '180px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      marginBottom: '12px',
+                      background: 'var(--bg-tertiary)',
+                      position: 'relative',
+                      cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+                    }}
+                    onClick={() => !isOutOfStock && addItem(p)}
+                  >
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                      className="hover-scale"
+                    />
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      backdropFilter: 'blur(4px)',
+                      color: '#fff',
+                      fontSize: '0.72rem',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontWeight: 700
+                    }}>
+                      {p.sku}
                     </span>
-                  </td>
 
-                  {/* + Hijau & - Merah Stepper Column */}
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    {inCartQty > 0 ? (
-                      <div style={{
-                        display: 'inline-flex',
+                    {inCartQty > 0 && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: '#fff',
+                        fontSize: '0.75rem',
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        fontWeight: 800,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                        display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        background: 'var(--bg-tertiary)',
-                        border: '1px solid var(--border-glass-strong)',
-                        borderRadius: '8px',
-                        padding: '3px 6px'
+                        gap: '3px'
                       }}>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(p.id, inCartQty - 1)}
-                          className="btn-stepper-minus"
-                          style={{ width: '26px', height: '26px' }}
-                          title="Kurangi (- Merah)"
-                        >
-                          <Minus size={13} />
-                        </button>
-                        <span style={{ fontWeight: 800, minWidth: '32px', textAlign: 'center', color: 'var(--text-main)', fontSize: '0.84rem' }}>
-                          {inCartQty}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (inCartQty < p.stock) addItem(p);
-                            else alert('Mencapai batas stok');
-                          }}
-                          className="btn-stepper-plus"
-                          style={{ width: '26px', height: '26px' }}
-                          title="Tambah (+ Hijau)"
-                        >
-                          <Plus size={13} />
-                        </button>
-                      </div>
-                    ) : (
+                        <Check size={12} /> {inCartQty} di Keranjang
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>
+                      {p.categoryName}
+                    </span>
+                    <span className={`badge ${isOutOfStock ? 'badge-danger' : isLowStock ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.72rem', padding: '3px 8px', fontWeight: 700 }}>
+                      {isOutOfStock ? 'Habis' : `Stok: ${p.stock} ${p.unit}`}
+                    </span>
+                  </div>
+
+                  <h4 style={{
+                    fontSize: '1.05rem',
+                    fontWeight: 800,
+                    color: 'var(--text-main)',
+                    margin: '3px 0 6px 0',
+                    lineHeight: '1.35',
+                    minHeight: '2.7em',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {p.name}
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: '1.4', height: '2.8em', overflow: 'hidden' }}>
+                    {p.description || 'Pilihan produk terbaik dengan kualitas prima.'}
+                  </p>
+
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--emerald-500)', marginBottom: '12px' }}>
+                    {formatRupiah(p.price)}
+                  </div>
+                </div>
+
+                {/* Cart Action Buttons */}
+                <div style={{ paddingTop: '10px', borderTop: '1px solid var(--border-glass-strong)' }}>
+                  {inCartQty > 0 ? (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-glass-strong)',
+                      borderRadius: '8px',
+                      padding: '4px 6px'
+                    }}>
                       <button
                         type="button"
-                        onClick={() => !isOutOfStock && addItem(p)}
-                        disabled={isOutOfStock}
-                        className="btn btn-secondary"
-                        style={{ padding: '5px 12px', fontSize: '0.75rem', gap: '4px' }}
+                        onClick={() => updateQuantity(p.id, inCartQty - 1)}
+                        className="btn-stepper-minus"
+                        style={{ width: '34px', height: '34px' }}
+                        title="Kurangi kuantitas (- Merah)"
                       >
-                        <Plus size={13} style={{ color: 'var(--emerald-500)' }} />
-                        <span>Tambah</span>
+                        <Minus size={15} />
                       </button>
-                    )}
-                  </td>
 
-                  {/* Admin Edit/Delete Column */}
+                      <div style={{ textAlign: 'center', padding: '0 4px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--emerald-500)', display: 'block', lineHeight: 1.1 }}>
+                          {inCartQty} {p.unit}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 700 }}>
+                          {formatRupiah(p.price * inCartQty)}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (inCartQty < p.stock) addItem(p);
+                          else alert('Mencapai batas stok');
+                        }}
+                        className="btn-stepper-plus"
+                        style={{ width: '34px', height: '34px' }}
+                        title="Tambah kuantitas (+ Hijau)"
+                      >
+                        <Plus size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => !isOutOfStock && addItem(p)}
+                      disabled={isOutOfStock}
+                      className="btn btn-secondary"
+                      style={{
+                        width: '100%',
+                        padding: '9px 14px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        gap: '6px',
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-glass-strong)'
+                      }}
+                    >
+                      <Plus size={16} style={{ color: 'var(--emerald-500)' }} />
+                      <span>+ Tambah ke Pesanan</span>
+                    </button>
+                  )}
+
                   {user?.role === 'admin' && (
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
-                        <button onClick={() => handleOpenEdit(p)} className="btn btn-secondary" style={{ padding: '5px 8px' }} title="Edit Produk">
-                          <Edit2 size={14} />
-                        </button>
-                        <button onClick={() => handleDelete(p.id, p.name)} className="btn btn-danger" style={{ padding: '5px 8px' }} title="Hapus Produk">
-                          <Trash2 size={14} />
-                        </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-glass)' }}>
+                      <button onClick={() => handleOpenEdit(p)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.72rem' }}>
+                        <Edit2 size={13} /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(p.id, p.name)} className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.72rem' }}>
+                        <Trash2 size={13} /> Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* VIEW 2: DETAILED TABLE VIEW (ENLARGED THUMBNAILS & FONTS) */
+        <div className="glass-panel" style={{ padding: '20px', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-glass-strong)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                <th style={{ padding: '14px 12px' }}>Produk</th>
+                <th style={{ padding: '14px 12px' }}>SKU / Barcode</th>
+                <th style={{ padding: '14px 12px' }}>Kategori</th>
+                {user?.role === 'admin' && <th style={{ padding: '14px 12px' }}>Harga Modal</th>}
+                <th style={{ padding: '14px 12px' }}>Harga Jual</th>
+                <th style={{ padding: '14px 12px' }}>Stok</th>
+                <th style={{ padding: '14px 12px', textAlign: 'center' }}>Pesan (+ / -)</th>
+                {user?.role === 'admin' && <th style={{ padding: '14px 12px', textAlign: 'center' }}>Aksi Admin</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(p => {
+                const cartItem = items.find(i => i.id === p.id);
+                const inCartQty = cartItem ? cartItem.quantity : 0;
+                const isOutOfStock = p.stock <= 0;
+
+                return (
+                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-glass)', background: inCartQty > 0 ? 'rgba(16, 185, 129, 0.04)' : 'transparent' }}>
+                    <td style={{ padding: '14px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-main)' }}>{p.name}</div>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{p.description?.slice(0, 45)}...</span>
+                        </div>
                       </div>
                     </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    <td style={{ padding: '14px 12px' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.sku}</div>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{p.barcode || '-'}</span>
+                    </td>
+                    <td style={{ padding: '14px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>{p.categoryName}</td>
+                    {user?.role === 'admin' && <td style={{ padding: '14px 12px' }}>{formatRupiah(p.costPrice)}</td>}
+                    <td style={{ padding: '14px 12px', fontWeight: 800, fontSize: '1.05rem', color: 'var(--emerald-500)' }}>{formatRupiah(p.price)}</td>
+                    <td style={{ padding: '14px 12px', fontWeight: 700 }}>
+                      <span className={`badge ${isOutOfStock ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '0.78rem', padding: '4px 8px' }}>
+                        {isOutOfStock ? 'Habis' : `${p.stock} ${p.unit}`}
+                      </span>
+                    </td>
+
+                    {/* + Hijau & - Merah Stepper Column */}
+                    <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                      {inCartQty > 0 ? (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: 'var(--bg-tertiary)',
+                          border: '1px solid var(--border-glass-strong)',
+                          borderRadius: '8px',
+                          padding: '3px 6px'
+                        }}>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(p.id, inCartQty - 1)}
+                            className="btn-stepper-minus"
+                            style={{ width: '30px', height: '30px' }}
+                            title="Kurangi (- Merah)"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span style={{ fontWeight: 800, minWidth: '36px', textAlign: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                            {inCartQty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (inCartQty < p.stock) addItem(p);
+                              else alert('Mencapai batas stok');
+                            }}
+                            className="btn-stepper-plus"
+                            style={{ width: '30px', height: '30px' }}
+                            title="Tambah (+ Hijau)"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => !isOutOfStock && addItem(p)}
+                          disabled={isOutOfStock}
+                          className="btn btn-secondary"
+                          style={{ padding: '7px 14px', fontSize: '0.8125rem', gap: '5px', fontWeight: 700 }}
+                        >
+                          <Plus size={14} style={{ color: 'var(--emerald-500)' }} />
+                          <span>Tambah</span>
+                        </button>
+                      )}
+                    </td>
+
+                    {/* Admin Edit/Delete Column */}
+                    {user?.role === 'admin' && (
+                      <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                          <button onClick={() => handleOpenEdit(p)} className="btn btn-secondary" style={{ padding: '6px 10px' }} title="Edit Produk">
+                            <Edit2 size={15} />
+                          </button>
+                          <button onClick={() => handleDelete(p.id, p.name)} className="btn btn-danger" style={{ padding: '6px 10px' }} title="Hapus Produk">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Floating Sticky Quick Checkout Bar */}
       {totalItemsCount > 0 && (

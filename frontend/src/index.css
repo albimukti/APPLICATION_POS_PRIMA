@@ -833,3 +833,52 @@ select.form-input option {
   padding-left: 38px;
 }
 
+/* ===================================================
+   ENLARGED & CRISP PRODUCT CATALOG GRID (CASHIER & CUSTOMER)
+   =================================================== */
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 1200px) {
+  .pos-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+}
+
+.btn-stepper-minus,
+.btn-stepper-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  font-weight: 800;
+  transition: all 0.15s ease;
+}
+
+.btn-stepper-minus {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.btn-stepper-minus:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-stepper-plus {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.btn-stepper-plus:hover {
+  background: #10b981;
+  color: #ffffff;
+}
+
+

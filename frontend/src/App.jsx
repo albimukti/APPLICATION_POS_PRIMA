@@ -44,12 +44,12 @@ const allowedKeysByRole = {
     'module_management', 'audit_logs', 'approvals'
   ],
   cashier: [
-    'transactions', 'shifts', 'receipts', 'products', 'inventory',
+    'transactions', 'shifts', 'products', 'inventory',
     'customers', 'payments', 'promos', 'loyalty', 'reports',
     'approvals'
   ],
   customer: [
-    'customers', 'products', 'promos', 'receipts', 'loyalty'
+    'customers', 'products', 'promos', 'loyalty'
   ]
 };
 

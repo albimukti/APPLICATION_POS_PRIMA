@@ -136,25 +136,27 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                   key={product.id}
                   className="glass-panel glass-panel-hover"
                   style={{
-                    padding: '10px',
+                    padding: '14px 14px 12px 14px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: 'relative',
                     overflow: 'hidden',
+                    borderRadius: '14px',
                     border: inCartQty > 0 ? '2px solid var(--emerald-500)' : '1px solid var(--border-glass-strong)',
-                    boxShadow: inCartQty > 0 ? '0 2px 10px rgba(5, 150, 105, 0.2)' : 'var(--shadow-sm)',
-                    background: inCartQty > 0 ? 'rgba(5, 150, 105, 0.04)' : 'var(--bg-card)'
+                    boxShadow: inCartQty > 0 ? '0 4px 14px rgba(5, 150, 105, 0.22)' : 'var(--shadow-sm)',
+                    background: inCartQty > 0 ? 'rgba(5, 150, 105, 0.04)' : 'var(--bg-card)',
+                    transition: 'all 0.2s ease'
                   }}
                 >
                   <div>
-                    {/* Image container */}
+                    {/* Image container - ENLARGED TO 160px FOR HIGH CLARITY */}
                     <div style={{
                       width: '100%',
-                      height: '105px',
-                      borderRadius: '8px',
+                      height: '160px',
+                      borderRadius: '10px',
                       overflow: 'hidden',
-                      marginBottom: '8px',
+                      marginBottom: '10px',
                       background: 'var(--bg-tertiary)',
                       position: 'relative',
                       cursor: isOutOfStock ? 'not-allowed' : 'pointer'
@@ -164,18 +166,19 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                       <img
                         src={product.imageUrl}
                         alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                        className="hover-scale"
                       />
                       <span style={{
                         position: 'absolute',
-                        top: '4px',
-                        left: '4px',
-                        background: 'rgba(15, 23, 42, 0.75)',
+                        top: '6px',
+                        left: '6px',
+                        background: 'rgba(15, 23, 42, 0.78)',
                         backdropFilter: 'blur(4px)',
                         color: '#fff',
-                        fontSize: '0.625rem',
-                        padding: '1px 5px',
-                        borderRadius: '4px',
+                        fontSize: '0.6875rem',
+                        padding: '2px 7px',
+                        borderRadius: '6px',
                         fontWeight: 700
                       }}>
                         {product.sku}
@@ -184,36 +187,36 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                       {inCartQty > 0 && (
                         <span style={{
                           position: 'absolute',
-                          top: '4px',
-                          right: '4px',
+                          top: '6px',
+                          right: '6px',
                           background: 'linear-gradient(135deg, #10b981, #059669)',
                           color: '#fff',
-                          fontSize: '0.625rem',
-                          padding: '2px 6px',
+                          fontSize: '0.72rem',
+                          padding: '3px 8px',
                           borderRadius: '999px',
                           fontWeight: 800,
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '2px'
+                          gap: '3px'
                         }}>
-                          <Check size={10} /> {inCartQty}
+                          <Check size={11} /> {inCartQty} di Keranjang
                         </span>
                       )}
                     </div>
 
-                    {/* Title & Category */}
+                    {/* Title & Category - ENLARGED & BOLD */}
                     <div>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.02em' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>
                         {product.categoryName}
                       </span>
                       <h4 style={{
-                        fontSize: '0.8125rem',
-                        fontWeight: 700,
+                        fontSize: '0.975rem',
+                        fontWeight: 800,
                         color: 'var(--text-main)',
-                        margin: '1px 0 4px 0',
-                        lineHeight: '1.25',
-                        height: '2.5em',
+                        margin: '3px 0 6px 0',
+                        lineHeight: '1.35',
+                        minHeight: '2.7em',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
@@ -223,19 +226,19 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                       </h4>
                     </div>
 
-                    {/* Price & Stock */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                      <div style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--emerald-500)' }}>
+                    {/* Price & Stock - ENLARGED */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--emerald-500)' }}>
                         {formatRupiah(product.price)}
                       </div>
-                      <span className={`badge ${isOutOfStock ? 'badge-danger' : isLowStock ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.625rem', padding: '2px 5px' }}>
-                        {isOutOfStock ? 'Habis' : `${product.stock} ${product.unit}`}
+                      <span className={`badge ${isOutOfStock ? 'badge-danger' : isLowStock ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.72rem', padding: '3px 8px', fontWeight: 700 }}>
+                        {isOutOfStock ? 'Habis' : `Stok: ${product.stock} ${product.unit}`}
                       </span>
                     </div>
                   </div>
 
-                  {/* + (Green) - (Red) Stepper Controls on Fresh Bright Box */}
-                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-glass-strong)' }}>
+                  {/* Stepper Controls on Fresh Bright Box */}
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-glass-strong)' }}>
                     {inCartQty > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {/* Stepper with - Merah and + Hijau */}
@@ -245,8 +248,8 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                           justifyContent: 'space-between',
                           background: 'var(--bg-tertiary)',
                           border: '1px solid var(--border-glass-strong)',
-                          borderRadius: '6px',
-                          padding: '3px 4px'
+                          borderRadius: '8px',
+                          padding: '4px 6px'
                         }}>
                           {/* - Merah */}
                           <button
@@ -256,17 +259,17 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                               updateQuantity(product.id, inCartQty - 1);
                             }}
                             className="btn-stepper-minus"
-                            style={{ width: '26px', height: '26px' }}
+                            style={{ width: '32px', height: '32px' }}
                             title="Kurangi kuantitas (- Merah)"
                           >
-                            <Minus size={13} />
+                            <Minus size={15} />
                           </button>
 
-                          <div style={{ textAlign: 'center', padding: '0 2px' }}>
-                            <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--emerald-500)', display: 'block', lineHeight: 1.1 }}>
+                          <div style={{ textAlign: 'center', padding: '0 4px' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--emerald-500)', display: 'block', lineHeight: 1.1 }}>
                               {inCartQty} {product.unit}
                             </span>
-                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-main)', fontWeight: 700 }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>
                               {formatRupiah(product.price * inCartQty)}
                             </span>
                           </div>
@@ -283,10 +286,10 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                               }
                             }}
                             className="btn-stepper-plus"
-                            style={{ width: '26px', height: '26px' }}
+                            style={{ width: '32px', height: '32px' }}
                             title="Tambah kuantitas (+ Hijau)"
                           >
-                            <Plus size={13} />
+                            <Plus size={15} />
                           </button>
                         </div>
                       </div>
@@ -301,15 +304,16 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                         className="btn btn-secondary"
                         style={{
                           width: '100%',
-                          padding: '6px 8px',
-                          fontSize: '0.75rem',
-                          gap: '4px',
+                          padding: '8px 12px',
+                          fontSize: '0.8125rem',
+                          fontWeight: 700,
+                          gap: '6px',
                           background: 'var(--bg-tertiary)',
                           border: '1px solid var(--border-glass-strong)'
                         }}
                       >
-                        <Plus size={13} style={{ color: 'var(--emerald-500)' }} />
-                        <span>+ Tambah</span>
+                        <Plus size={15} style={{ color: 'var(--emerald-500)' }} />
+                        <span>+ Tambah Pesanan</span>
                       </button>
                     )}
                   </div>
