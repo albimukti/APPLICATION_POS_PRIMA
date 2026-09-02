@@ -7,7 +7,23 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('pos_user');
     if (savedUser) {
-      try { return JSON.parse(savedUser); } catch (e) {}
+      try {
+        const parsed = JSON.parse(savedUser);
+        // Hapus otomatis profil demo lama 'Ahmad Administrator'
+        if (parsed?.name === 'Ahmad Administrator' || parsed?.username === 'Ahmad' || parsed?.avatar?.includes('bottts')) {
+          const sanitizedAdmin = {
+            id: 'usr-admin',
+            username: 'admin',
+            name: 'Administrator',
+            role: 'admin',
+            email: 'admin@posprima.id',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
+          };
+          localStorage.setItem('pos_user', JSON.stringify(sanitizedAdmin));
+          return sanitizedAdmin;
+        }
+        return parsed;
+      } catch (e) {}
     }
     return null;
   });
@@ -23,6 +39,23 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  // Sinkronisasi profil pengguna ke data akun backend sebenarnya
+  useEffect(() => {
+    async function syncCurrentUser() {
+      const storedToken = localStorage.getItem('pos_token');
+      if (storedToken && storedToken !== 'demo-token') {
+        try {
+          const res = await api.getMe();
+          if (res && res.success && res.user) {
+            setUser(res.user);
+            localStorage.setItem('pos_user', JSON.stringify(res.user));
+          }
+        } catch (_) {}
+      }
+    }
+    syncCurrentUser();
+  }, []);
+
   const login = async (username, password) => {
     setLoading(true);
     try {
@@ -33,14 +66,14 @@ export function AuthProvider({ children }) {
       localStorage.setItem('pos_user', JSON.stringify(res.user));
       return res;
     } catch (err) {
-      // Fallback demo local login if backend is unreachable
+      // Fallback demo local login jika server backend offline
       if ((username === 'admin' || username === 'kasir' || username === 'customer') &&
-          (password === 'admin123' || password === 'kasir123' || password === 'cust123')) {
+          (password === 'P@ssw0rd' || password === 'admin' || password === 'kasir123' || password === 'cust123')) {
         const fallbackRole = username === 'admin' ? 'admin' : username === 'kasir' ? 'cashier' : 'customer';
         const fallbackUser = fallbackRole === 'admin'
-          ? { id: 'usr-admin', username: 'admin', name: 'Ahmad Administrator', role: 'admin', email: 'admin@pos-sistem.id', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin' }
+          ? { id: 'usr-admin', username: 'admin', name: 'Administrator', role: 'admin', email: 'admin@posprima.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' }
           : fallbackRole === 'cashier'
-          ? { id: 'usr-cashier', username: 'kasir', name: 'Siti Nurhaliza', role: 'cashier', email: 'kasir@pos-sistem.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=siti' }
+          ? { id: 'usr-cashier', username: 'kasir', name: 'Siti Nurhaliza', role: 'cashier', email: 'kasir@posprima.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=siti' }
           : { id: 'usr-customer', username: 'customer', name: 'Budi Santoso', role: 'customer', email: 'budi@customer.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=budi' };
         setUser(fallbackUser);
         setToken('demo-token');

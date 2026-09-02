@@ -114,7 +114,7 @@ export default function AuditLogModule() {
         {
           id: 'audit-006',
           userId: 'usr-admin',
-          username: 'Ahmad Administrator',
+          username: 'Administrator',
           role: 'admin',
           action: 'PRICE_UPDATE',
           target: 'Kopi Arabika Gayo 250g',

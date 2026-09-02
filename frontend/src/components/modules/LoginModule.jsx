@@ -5,7 +5,7 @@ import { Key, Crown, Store, UserCheck, CheckCircle2, ShieldCheck, Lock } from 'l
 export default function LoginModule() {
   const { user, login, switchRole, loading } = useAuth();
   const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('P@ssw0rd');
   const [successMsg, setSuccessMsg] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -88,7 +88,7 @@ export default function LoginModule() {
         >
           <Crown size={32} style={{ color: '#818cf8', margin: '0 auto 8px' }} />
           <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 700 }}>Akun Admin</h4>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>admin / admin123</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>admin / P@ssw0rd</span>
           <div style={{ marginTop: '10px' }}>
             <span className="badge badge-indigo">Akses 16 Modul</span>
           </div>

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const AVATAR_PRESETS = [
-  { id: 'admin_1', label: 'Admin Eksekutif', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AhmadAdmin' },
+  { id: 'admin_1', label: 'Admin Eksekutif', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AdminPrima' },
   { id: 'cashier_fem', label: 'Kasir Ramah (Wanita)', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SitiKasir' },
   { id: 'cashier_male', label: 'Kasir Sigap (Pria)', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RianKasir' },
   { id: 'barista', label: 'Barista / F&B Staff', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=BaristaPro' },
