@@ -74,6 +74,8 @@ async function initPostgres() {
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key;
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
                 CREATE UNIQUE INDEX IF NOT EXISTS users_phone_unique_idx ON users (phone) WHERE phone IS NOT NULL AND phone != '';
+                ALTER TABLE products DROP CONSTRAINT IF EXISTS products_category_id_fkey;
+                ALTER TABLE inventory_logs DROP CONSTRAINT IF EXISTS inventory_logs_product_id_fkey;
               `);
             } catch (_) {}
 

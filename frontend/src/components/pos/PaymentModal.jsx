@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { useCart } from '../../context/CartContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { formatRupiah } from '../../utils/formatters';
 import confetti from 'canvas-confetti';
@@ -15,7 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
+export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overrideTotal }) {
   const {
     items,
     customer,
@@ -29,12 +31,21 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
     totalAmount,
     clearCart
   } = useCart();
-
+  const { settings } = useSettings();
+  const { user } = useAuth();
+  // Use overridden total if provided to ensure consistent checkout amount across payment methods
+  const displayedTotal = typeof overrideTotal === 'number' ? overrideTotal : totalAmount;
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState('CASH');
   const [cashGiven, setCashGiven] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  // QR code zoom toggle
+  const [isQrZoomed, setIsQrZoomed] = useState(false);
+
+
+  // Link QRIS Toko resmi (dikelola oleh Admin di Pengaturan Toko)
+  const activeQrisLink = settings?.store?.qrisUrl || localStorage.getItem('pos_custom_qris_link') || '';
 
   useEffect(() => {
     async function loadMethods() {
@@ -53,23 +64,23 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
     }
     if (isOpen) {
       loadMethods();
-      setCashGiven(String(totalAmount));
+      setCashGiven(String(displayedTotal));
       setErrorMessage(null);
     }
   }, [isOpen, totalAmount]);
 
   const cashAmount = parseFloat(cashGiven) || 0;
-  const changeAmount = selectedMethod === 'CASH' ? Math.max(0, cashAmount - totalAmount) : 0;
-  const isCashInsufficient = selectedMethod === 'CASH' && cashAmount < totalAmount;
+  const changeAmount = selectedMethod === 'CASH' ? Math.max(0, cashAmount - displayedTotal) : 0;
+  const isCashInsufficient = selectedMethod === 'CASH' && cashAmount < displayedTotal;
 
   // Preset cash buttons
   const quickCashOptions = [
-    { label: 'Uang Pas', value: totalAmount },
+    { label: 'Uang Pas', value: displayedTotal },
     { label: 'Rp 20.000', value: 20000 },
     { label: 'Rp 50.000', value: 50000 },
     { label: 'Rp 100.000', value: 100000 },
     { label: 'Rp 200.000', value: 200000 }
-  ].filter(opt => opt.value >= totalAmount || opt.label === 'Uang Pas');
+  ].filter(opt => opt.value >= displayedTotal || opt.label === 'Uang Pas');
 
   const handleProcessPayment = async () => {
     if (isCashInsufficient) {
@@ -99,9 +110,9 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
         promoCode: promo?.promo?.code || null,
         pointsUsed: pointsToUse,
         pointsDiscount: pointsToUse * 100,
-        totalAmount,
+        totalAmount: displayedTotal,
         paymentMethod: selectedMethod,
-        amountPaid: selectedMethod === 'CASH' ? cashAmount : totalAmount,
+        amountPaid: selectedMethod === 'CASH' ? cashAmount : displayedTotal,
         changeAmount: changeAmount
       };
 
@@ -152,7 +163,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
           <div>
             <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL TAGIHAN</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--emerald-500)' }}>
-              {formatRupiah(totalAmount)}
+              {formatRupiah(displayedTotal)}
             </div>
           </div>
           <div style={{ textAlign: 'right', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
@@ -242,13 +253,13 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
                 {isCashInsufficient ? 'Uang Masih Kurang:' : 'Kembalian (Change):'}
               </span>
               <span style={{ fontSize: '1.25rem', fontWeight: 800, color: isCashInsufficient ? '#f43f5e' : '#34d399' }}>
-                {isCashInsufficient ? formatRupiah(totalAmount - cashAmount) : formatRupiah(changeAmount)}
+                {isCashInsufficient ? formatRupiah(displayedTotal - cashAmount) : formatRupiah(changeAmount)}
               </span>
             </div>
           </div>
         )}
 
-        {/* QRIS Dynamic Display */}
+        {/* QRIS Display (Pengaturan dikelola terpusat di Pengaturan Toko oleh Admin) */}
         {selectedMethod === 'QRIS' && (
           <div style={{
             display: 'flex',
@@ -258,25 +269,54 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment }) {
             background: 'var(--bg-secondary)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-glass)',
-            textAlign: 'center'
+            textAlign: 'center',
+            gap: '12px'
           }}>
             <div style={{
-              padding: '16px',
+              padding: '14px',
               background: '#ffffff',
               borderRadius: '12px',
               boxShadow: 'var(--shadow-lg)',
-              marginBottom: '12px'
+              maxWidth: '360px',
+              maxHeight: '360px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              border: '2px solid #00a86b'
             }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020101021226580016ID.CO.QRIS.WWW01189360091100000000000215ID102000000000005204541153033605802ID5914POS+PRIMA+ID6007JAKARTA62070703A016304${totalAmount}`}
-                alt="QRIS Code"
-                style={{ width: '180px', height: '180px', display: 'block' }}
+                src={activeQrisLink || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020101021226580016ID.CO.QRIS.WWW01189360091100000000000215ID102000000000005204541153033605802ID5914POS+PRIMA+ID6007JAKARTA62070703A016304${displayedTotal}`}
+                alt="QRIS Toko"
+                style={{
+                  maxWidth: isQrZoomed ? '350px' : '190px',
+                  maxHeight: isQrZoomed ? '350px' : '190px',
+                  objectFit: 'contain',
+                  display: 'block',
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease'
+                }}
+                onClick={() => setIsQrZoomed(prev => !prev)}
+                onError={(e) => {
+                  e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=POS_PRIMA_${displayedTotal}`;
+                }}
               />
             </div>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 700 }}>Scan QRIS Dinamis</h4>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Mendukung BCA, Mandiri, GoPay, OVO, ShopeePay, DANA, LinkAja
-            </p>
+
+            <div>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                {activeQrisLink ? 'Scan QRIS Merchant Resmi' : 'Scan QRIS Dinamis'}
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Mendukung BCA, Mandiri, GoPay, OVO, ShopeePay, DANA, LinkAja & Seluruh Mobile Banking
+              </p>
+            </div>
+
+            {user?.role === 'admin' && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                💡 <i>Pengaturan upload QRIS & tarif pajak dikelola di <b>Pengaturan Toko (Khusus Admin)</b>.</i>
+              </div>
+            )}
           </div>
         )}
 

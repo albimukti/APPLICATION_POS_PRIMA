@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ProductCatalog from '../pos/ProductCatalog';
+import ProductModule from './ProductModule';
 import CartDrawer from '../pos/CartDrawer';
 import PaymentModal from '../pos/PaymentModal';
 import ReceiptModal from '../pos/ReceiptModal';
@@ -97,8 +97,8 @@ export default function TransactionModule() {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      padding: '12px 20px 24px 20px',
-      gap: '12px',
+      padding: '8px 18px',
+      gap: '10px',
       width: '100%',
       boxSizing: 'border-box'
     }}>
@@ -108,43 +108,30 @@ export default function TransactionModule() {
           <button
             onClick={() => setSubTab('pos')}
             className={`btn ${subTab === 'pos' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '7px 16px', fontSize: '0.84rem' }}
+            style={{ padding: '6px 16px', fontSize: '0.85rem' }}
           >
-            <ShoppingBag size={16} />
-            <span>Katalog Kasir (POS)</span>
+            <ShoppingBag size={15} />
+            <span>Terminal POS Kasir</span>
           </button>
           <button
             onClick={() => setSubTab('history')}
             className={`btn ${subTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '7px 16px', fontSize: '0.84rem' }}
+            style={{ padding: '6px 16px', fontSize: '0.85rem' }}
           >
-            <History size={16} />
+            <History size={15} />
             <span>Riwayat Transaksi Penjualan</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {totalItemsCount > 0 && (
-            <button
-              onClick={openCart}
-              className="btn btn-primary pulse-active"
-              style={{ padding: '6px 14px', fontSize: '0.8125rem', gap: '6px' }}
-            >
-              <ShoppingCart size={15} />
-              <span>Lihat Keranjang ({totalItemsCount} Item • {formatRupiah(totalAmount)})</span>
-            </button>
-          )}
-            <span className="badge badge-indigo">{user?.role === 'customer' ? 'Katalog Produk & Checkout' : 'Modul #1 - Kasir'}</span>
+            <span className="badge badge-indigo">{user?.role === 'customer' ? 'Katalog Produk & Checkout' : 'Terminal Kasir & Checkout'}</span>
         </div>
       </div>
 
       {/* VIEW 1: CASHIER POS SCREEN (SPACIOUS FULL-WIDTH CATALOG) */}
       {subTab === 'pos' && (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <ProductCatalog
-            onOpenScanner={() => setIsScannerOpen(true)}
-            onOpenPayment={() => setIsPaymentOpen(true)}
-          />
+          <ProductModule />
         </div>
       )}
 

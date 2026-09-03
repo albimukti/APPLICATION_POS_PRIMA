@@ -56,6 +56,9 @@ export const api = {
     return request(`/products${query ? `?${query}` : ''}`);
   },
   getProductCategories: () => request('/products/categories'),
+  createCategory: (data) => request('/products/categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateCategory: (id, data) => request(`/products/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCategory: (id) => request(`/products/categories/${id}`, { method: 'DELETE' }),
   createProduct: (data) => request('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id, data) => request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
@@ -90,6 +93,8 @@ export const api = {
   getPromos: () => request('/promos'),
   validatePromo: (code, orderAmount) => request('/promos/validate', { method: 'POST', body: JSON.stringify({ code, orderAmount }) }),
   createPromo: (data) => request('/promos', { method: 'POST', body: JSON.stringify(data) }),
+  updatePromo: (id, data) => request(`/promos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePromo: (id) => request(`/promos/${id}`, { method: 'DELETE' }),
   togglePromo: (id) => request(`/promos/${id}/toggle`, { method: 'PUT' }),
 
   // Reports (#7)

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const dataStore = require('../services/dataStore');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/requireAdmin');
 const { requireModuleActive } = require('../middleware/moduleGuard');
 
 // GET /api/promos
@@ -26,7 +27,7 @@ router.post('/validate', authenticateToken, requireModuleActive('promos'), (req,
 });
 
 // POST /api/promos (Admin only: create promo)
-router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive('promos'), (req, res) => {
+router.post('/', authenticateToken, requireAdmin, requireModuleActive('promos'), (req, res) => {
   try {
     const { code, name, discountValue } = req.body;
     if (!code || !name || discountValue === undefined) {
@@ -39,8 +40,28 @@ router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive(
   }
 });
 
+// PUT /api/promos/:id (Admin only: update promo)
+router.put('/:id', authenticateToken, requireAdmin, requireModuleActive('promos'), (req, res) => {
+  try {
+    const updated = dataStore.updatePromo(req.params.id, req.body);
+    res.json({ success: true, message: 'Promo berhasil diperbarui', promo: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/promos/:id (Admin only: delete promo)
+router.delete('/:id', authenticateToken, requireAdmin, requireModuleActive('promos'), (req, res) => {
+  try {
+    dataStore.deletePromo(req.params.id);
+    res.json({ success: true, message: 'Promo berhasil dihapus' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 // PUT /api/promos/:id/toggle (Admin only)
-router.put('/:id/toggle', authenticateToken, requireRole(['admin']), requireModuleActive('promos'), (req, res) => {
+router.put('/:id/toggle', authenticateToken, requireAdmin, requireModuleActive('promos'), (req, res) => {
   try {
     const promo = dataStore.togglePromo(req.params.id);
     res.json({ success: true, message: `Promo ${promo.code} ${promo.isActive ? 'diaktifkan' : 'dinonaktifkan'}`, promo });

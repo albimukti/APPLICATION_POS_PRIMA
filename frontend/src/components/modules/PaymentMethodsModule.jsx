@@ -44,6 +44,7 @@ export default function PaymentMethodsModule() {
     }
   };
 
+
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
       <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -64,6 +65,23 @@ export default function PaymentMethodsModule() {
           <span>{successMsg}</span>
         </div>
       )}
+
+      {/* QRIS & Pajak Consolidated Info */}
+      <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', background: 'rgba(0, 168, 107, 0.06)', border: '1.5px solid rgba(0, 168, 107, 0.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(0, 168, 107, 0.15)', color: '#00a86b' }}>
+            <QrCode size={24} />
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 2px 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Pengaturan Upload Link QRIS & Tarif Pajak
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Upload barcode QRIS toko dan persentase tarif pajak dikelola terpusat di menu <b>Pengaturan Toko (Modul #12)</b> dan hanya dapat diakses oleh Administrator.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid-responsive" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
         {methods.map(m => {

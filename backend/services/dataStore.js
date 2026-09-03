@@ -537,7 +537,54 @@ class DataStore {
     return this.snapshots[snapshotId] || null;
   }
 
-  // ================= PRODUCTS (#3) =================
+  // ================= CATEGORIES & PRODUCTS (#3) =================
+  createCategory(data) {
+    if (!data.name || !data.name.trim()) throw new Error('Nama kategori wajib diisi');
+    const name = data.name.trim();
+    const slug = data.slug && data.slug.trim() 
+      ? data.slug.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') 
+      : name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+    const existing = this.categories.find(c => c.name.toLowerCase() === name.toLowerCase() || c.slug === slug);
+    if (existing) throw new Error(`Kategori "${name}" sudah ada`);
+
+    const newCat = {
+      id: data.id || `cat-${Date.now()}`,
+      name,
+      slug,
+      icon: data.icon || 'Tag',
+      color: data.color || '#10b981'
+    };
+    this.categories.push(newCat);
+    dbSync.persistCategory(newCat).catch(() => {});
+    return newCat;
+  }
+
+  updateCategory(id, data) {
+    const cat = this.categories.find(c => c.id === id);
+    if (!cat) throw new Error('Kategori tidak ditemukan');
+    if (data.name && data.name.trim()) {
+      cat.name = data.name.trim();
+      cat.slug = cat.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    }
+    if (data.icon) cat.icon = data.icon;
+    if (data.color) cat.color = data.color;
+    dbSync.persistCategory(cat).catch(() => {});
+    return cat;
+  }
+
+  deleteCategory(id) {
+    const idx = this.categories.findIndex(c => c.id === id);
+    if (idx === -1) throw new Error('Kategori tidak ditemukan');
+    const prodsInCat = this.products.filter(p => p.categoryId === id);
+    if (prodsInCat.length > 0) {
+      throw new Error(`Kategori tidak dapat dihapus karena masih digunakan oleh ${prodsInCat.length} produk`);
+    }
+    const deleted = this.categories.splice(idx, 1)[0];
+    dbSync.deleteCategoryFromDb(id).catch(() => {});
+    return deleted;
+  }
+
   getProducts(filters = {}) {
     let list = [...this.products];
     if (filters.categoryId) {
@@ -557,14 +604,39 @@ class DataStore {
     return this.products.find(p => p.id === id);
   }
 
+  resolveCategory(categoryId, categoryName) {
+    let name = (categoryName || '').trim();
+    let id = categoryId;
+
+    if (!name && id) {
+      const found = this.categories.find(c => c.id === id);
+      if (found) name = found.name;
+    }
+
+    if (name) {
+      let cat = this.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (!cat) {
+        cat = this.createCategory({ name, color: '#10b981' });
+      }
+      return { id: cat.id, name: cat.name };
+    }
+
+    let defCat = this.categories[0];
+    if (!defCat) {
+      defCat = this.createCategory({ name: 'Makanan & Snack', color: '#10b981' });
+    }
+    return { id: defCat.id, name: defCat.name };
+  }
+
   createProduct(data) {
+    const cat = this.resolveCategory(data.categoryId, data.categoryName);
     const newProduct = {
       id: `prod-${Date.now()}`,
       sku: data.sku || `PRD-${String(this.products.length + 1).padStart(3, '0')}`,
       barcode: data.barcode || `${Date.now()}`,
       name: data.name,
-      categoryId: data.categoryId,
-      categoryName: data.categoryName || (this.categories.find(c => c.id === data.categoryId)?.name || 'Umum'),
+      categoryId: cat.id,
+      categoryName: cat.name,
       description: data.description || '',
       price: parseFloat(data.price) || 0,
       costPrice: parseFloat(data.costPrice) || 0,
@@ -597,11 +669,18 @@ class DataStore {
     if (idx === -1) throw new Error('Produk tidak ditemukan');
 
     const prev = this.products[idx];
+    let catUpdate = {};
+    if (data.categoryId || data.categoryName) {
+      const resolved = this.resolveCategory(data.categoryId, data.categoryName);
+      catUpdate = { categoryId: resolved.id, categoryName: resolved.name };
+    }
+
     const stockDiff = data.stock !== undefined ? parseInt(data.stock, 10) - prev.stock : 0;
 
     this.products[idx] = {
       ...prev,
       ...data,
+      ...catUpdate,
       price: data.price !== undefined ? parseFloat(data.price) : prev.price,
       costPrice: data.costPrice !== undefined ? parseFloat(data.costPrice) : prev.costPrice,
       stock: data.stock !== undefined ? parseInt(data.stock, 10) : prev.stock,
@@ -1221,6 +1300,33 @@ class DataStore {
     promo.isActive = !promo.isActive;
     dbSync.persistPromo(promo).catch(() => {});
     return promo;
+  }
+
+  updatePromo(id, data) {
+    const idx = this.promos.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Promo tidak ditemukan');
+    const promo = this.promos[idx];
+    if (data.code) promo.code = data.code.toUpperCase();
+    if (data.name !== undefined) promo.name = data.name;
+    if (data.discountType) promo.discountType = data.discountType;
+    if (data.discountValue !== undefined) promo.discountValue = parseFloat(data.discountValue) || 0;
+    if (data.minOrderAmount !== undefined) promo.minOrderAmount = parseFloat(data.minOrderAmount) || 0;
+    if (data.maxDiscountAmount !== undefined) promo.maxDiscountAmount = parseFloat(data.maxDiscountAmount) || 0;
+    if (data.quota !== undefined) promo.quota = parseInt(data.quota, 10) || promo.quota;
+    if (data.validFrom) promo.validFrom = data.validFrom;
+    if (data.validUntil) promo.validUntil = data.validUntil;
+    if (data.isActive !== undefined) promo.isActive = data.isActive;
+    this.promos[idx] = promo;
+    dbSync.persistPromo(promo).catch(() => {});
+    return promo;
+  }
+
+  deletePromo(id) {
+    const idx = this.promos.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Promo tidak ditemukan');
+    const [removed] = this.promos.splice(idx, 1);
+    dbSync.deletePromo(removed.id).catch(() => {});
+    return removed;
   }
 
   // ================= USERS (#8) & AUTH (#13) =================

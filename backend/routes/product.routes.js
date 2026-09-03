@@ -21,6 +21,40 @@ router.get('/categories', authenticateToken, requireModuleActive('products'), (r
   res.json({ success: true, categories: dataStore.categories });
 });
 
+// POST /api/products/categories (Admin & Cashier can add categories)
+router.post('/categories', authenticateToken, requireRole(['admin', 'cashier']), requireModuleActive('products'), (req, res) => {
+  try {
+    const { name, icon, color } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Nama kategori wajib diisi' });
+    }
+    const category = dataStore.createCategory(req.body);
+    res.status(201).json({ success: true, message: `Kategori "${category.name}" berhasil ditambahkan`, category });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/products/categories/:id (Admin only)
+router.put('/categories/:id', authenticateToken, requireRole(['admin']), requireModuleActive('products'), (req, res) => {
+  try {
+    const category = dataStore.updateCategory(req.params.id, req.body);
+    res.json({ success: true, message: `Kategori "${category.name}" berhasil diperbarui`, category });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/products/categories/:id (Admin only)
+router.delete('/categories/:id', authenticateToken, requireRole(['admin']), requireModuleActive('products'), (req, res) => {
+  try {
+    const category = dataStore.deleteCategory(req.params.id);
+    res.json({ success: true, message: `Kategori "${category.name}" berhasil dihapus`, category });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/products/:id
 router.get('/:id', authenticateToken, requireModuleActive('products'), (req, res) => {
   const product = dataStore.getProductById(req.params.id);
@@ -31,8 +65,8 @@ router.get('/:id', authenticateToken, requireModuleActive('products'), (req, res
 // POST /api/products (Admin only)
 router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive('products'), (req, res) => {
   try {
-    const { name, categoryId, price } = req.body;
-    if (!name || !categoryId || price === undefined) {
+    const { name, categoryId, categoryName, price } = req.body;
+    if (!name || (!categoryId && !categoryName) || price === undefined) {
       return res.status(400).json({ success: false, message: 'Nama, kategori, dan harga produk wajib diisi' });
     }
     const product = dataStore.createProduct(req.body);

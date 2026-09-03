@@ -14,6 +14,8 @@ const defaultSettings = {
     website: 'https://posprima.co.id',
     npwp: '01.234.567.8-012.000',
     taxPercentage: 11,
+    enableTax: true,
+    qrisUrl: localStorage.getItem('pos_custom_qris_link') || '',
     currencySymbol: 'Rp',
     receiptHeader: 'Terima kasih atas kunjungan Anda!',
     receiptFooter: 'Barang yang sudah dibeli dapat ditukar maksimal 2x24 jam dengan membawa struk asli.',

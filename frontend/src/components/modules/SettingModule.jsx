@@ -23,7 +23,9 @@ import {
   Trash2,
   RefreshCw,
   Link,
-  Check
+  Check,
+  ShieldAlert,
+  QrCode
 } from 'lucide-react';
 
 export default function SettingModule() {
@@ -43,6 +45,8 @@ export default function SettingModule() {
     website: 'https://posprima.co.id',
     npwp: '01.234.567.8-012.000',
     taxPercentage: 11,
+    enableTax: true,
+    qrisUrl: localStorage.getItem('pos_custom_qris_link') || '',
     currencySymbol: 'Rp',
     receiptHeader: 'Terima kasih atas kunjungan Anda!',
     receiptFooter: 'Barang yang sudah dibeli dapat ditukar maksimal 2x24 jam dengan membawa struk asli.',
@@ -57,7 +61,7 @@ export default function SettingModule() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
-  const [activeTabSub, setActiveTabSub] = useState('branding'); // 'branding', 'store', 'receipt', 'system'
+  const [activeTabSub, setActiveTabSub] = useState('branding'); // 'branding', 'store', 'qris_tax', 'receipt', 'system'
 
   useEffect(() => {
     if (settings?.store) {
@@ -66,7 +70,10 @@ export default function SettingModule() {
         ...settings.store,
         appName: settings.store.appName || 'POS PRIMA',
         appSubtitle: settings.store.appSubtitle || 'INDONESIA POINT OF SALE',
-        logoUrl: settings.store.logoUrl || ''
+        logoUrl: settings.store.logoUrl || '',
+        qrisUrl: settings.store.qrisUrl || localStorage.getItem('pos_custom_qris_link') || '',
+        enableTax: settings.store.enableTax !== false,
+        taxPercentage: settings.store.taxPercentage !== undefined ? settings.store.taxPercentage : 11
       }));
     }
   }, [settings]);
@@ -113,14 +120,22 @@ export default function SettingModule() {
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
+      if (formData.qrisUrl) {
+        localStorage.setItem('pos_custom_qris_link', formData.qrisUrl.trim());
+      } else {
+        localStorage.removeItem('pos_custom_qris_link');
+      }
+
       await updateSettings({
         store: {
           ...formData,
           taxPercentage: parseFloat(formData.taxPercentage) || 0,
+          enableTax: formData.enableTax !== false,
+          qrisUrl: formData.qrisUrl ? formData.qrisUrl.trim() : '',
           pointsPer10k: parseInt(formData.pointsPer10k, 10) || 1
         }
       });
-      setSuccessMsg('Pengaturan logo, nama aplikasi & toko berhasil disimpan!');
+      setSuccessMsg('Pengaturan toko, pajak & QRIS berhasil disimpan!');
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
       alert(err.message || 'Gagal menyimpan pengaturan');
@@ -145,6 +160,21 @@ export default function SettingModule() {
     downloadAnchor.click();
     downloadAnchor.remove();
   };
+
+  // Proteksi Akses: Hanya Admin yang bisa mengakses Pengaturan Toko
+  if (user?.role !== 'admin') {
+    return (
+      <div style={{ padding: '60px 24px', textAlign: 'center', maxWidth: '560px', margin: '40px auto' }} className="glass-panel">
+        <ShieldAlert size={56} style={{ color: '#ef4444', margin: '0 auto 16px auto' }} />
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+          Akses Terbatas (Khusus Admin)
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+          Halaman Pengaturan Toko (termasuk upload link QRIS, tarif pajak PPN, profil toko, dan konfigurasi database) hanya dapat diakses dan diubah oleh akun Administrator.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
@@ -209,12 +239,21 @@ export default function SettingModule() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTabSub('qris_tax')}
+              className={`btn ${activeTabSub === 'qris_tax' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '8px 14px', fontSize: '0.8125rem', gap: '6px' }}
+            >
+              <QrCode size={16} />
+              <span>Pajak & QRIS Toko</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTabSub('receipt')}
               className={`btn ${activeTabSub === 'receipt' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ padding: '8px 14px', fontSize: '0.8125rem', gap: '6px' }}
             >
               <Receipt size={16} />
-              <span>Struk & Pajak</span>
+              <span>Struk Thermal</span>
             </button>
             <button
               type="button"
@@ -451,30 +490,183 @@ export default function SettingModule() {
               </div>
             )}
 
-            {/* TAB 3: RECEIPT & TAX */}
-            {activeTabSub === 'receipt' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div className="grid-responsive" style={{ gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label className="form-label">Tarif Pajak PPN (%):</label>
+            {/* TAB: QRIS & PAJAK TOKO (KHUSUS ADMIN) */}
+            {activeTabSub === 'qris_tax' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(0, 168, 107, 0.1)', border: '1px solid rgba(0, 168, 107, 0.3)', color: '#00a86b', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <QrCode size={20} />
+                  <span>
+                    <b>Pengaturan Pembayaran & Pajak Resmi Toko (Khusus Admin):</b> Konfigurasi link QRIS dan persentase pajak ini dikelola terpusat di sini dan otomatis diterapkan di kasir.
+                  </span>
+                </div>
+
+                {/* 1. UPLOAD / ATUR LINK QRIS TOKO */}
+                <div style={{
+                  padding: '18px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-glass-strong)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <QrCode size={18} style={{ color: 'var(--emerald-500)' }} />
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      1. Upload / Atur Link Gambar QRIS Toko
+                    </h4>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Masukkan link URL gambar barcode QRIS toko Anda (misal dari link hosting gambar, Imgur, atau server Anda). Pelanggan dapat scan gambar QRIS ini saat pembayaran di kasir.
+                  </p>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: 700 }}>
+                      URL Link Gambar QRIS:
+                    </label>
                     <input
-                      type="number"
-                      step="0.1"
+                      type="url"
                       className="form-input"
-                      value={formData.taxPercentage}
-                      onChange={(e) => setFormData({ ...formData, taxPercentage: e.target.value })}
+                      placeholder="Contoh: https://i.imgur.com/barcode-qris-toko.jpg atau https://domain.com/qris.png"
+                      value={formData.qrisUrl}
+                      onChange={(e) => setFormData({ ...formData, qrisUrl: e.target.value })}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Simbol Mata Uang:</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={formData.currencySymbol}
-                      onChange={(e) => setFormData({ ...formData, currencySymbol: e.target.value })}
-                    />
+                  {/* QRIS Live Preview Box */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    background: 'var(--bg-secondary)',
+                    padding: '14px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-glass)'
+                  }}>
+                    <div style={{
+                      width: '100px',
+                      height: '100px',
+                      background: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1.5px solid #00a86b',
+                      flexShrink: 0
+                    }}>
+                      <img
+                        src={formData.qrisUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=POS_PRIMA_DEMO_QRIS'}
+                        alt="Preview QRIS"
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+                        onError={(e) => {
+                          e.target.src = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=POS_PRIMA_DEMO_QRIS';
+                        }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span className={`badge ${formData.qrisUrl ? 'badge-success' : 'badge-indigo'}`}>
+                          {formData.qrisUrl ? '● Menggunakan Link Custom' : '○ Menggunakan QR Dinamis Bawaan'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        {formData.qrisUrl ? 'Gambar QRIS Siap Digunakan di Kasir' : 'Belum Ada Link Khusus (QR Dinamis Aktif)'}
+                      </div>
+                      {formData.qrisUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, qrisUrl: '' })}
+                          className="btn btn-danger"
+                          style={{ padding: '4px 10px', fontSize: '0.75rem', marginTop: '8px' }}
+                        >
+                          Hapus Link QRIS
+                        </button>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                {/* 2. PENGATURAN TARIF PAJAK */}
+                <div style={{
+                  padding: '18px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-glass-strong)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Percent size={18} style={{ color: 'var(--emerald-500)' }} />
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      2. Pengaturan Pajak Penjualan (PPN / PB1 / Tax)
+                    </h4>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Tentukan persentase pajak yang dibebankan pada setiap transaksi penjualan saat checkout kasir.
+                  </p>
+
+                  <div className="grid-responsive" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: 700 }}>
+                        Tarif Pajak (%):
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        className="form-input"
+                        value={formData.taxPercentage}
+                        onChange={(e) => setFormData({ ...formData, taxPercentage: e.target.value })}
+                      />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                        Standar Indonesia: 11% (PPN) atau 10% (PB1 Resto)
+                      </span>
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: 700 }}>
+                        Status Penerapan Pajak:
+                      </label>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-glass)',
+                        cursor: 'pointer'
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.enableTax !== false}
+                          onChange={(e) => setFormData({ ...formData, enableTax: e.target.checked })}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--emerald-500)' }}
+                        />
+                        <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                          {formData.enableTax !== false ? 'Pajak Aktif pada Checkout' : 'Pajak Dinonaktifkan (0%)'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: RECEIPT / STRUK */}
+            {activeTabSub === 'receipt' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="form-group">
+                  <label className="form-label">Simbol Mata Uang:</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.currencySymbol}
+                    onChange={(e) => setFormData({ ...formData, currencySymbol: e.target.value })}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -619,6 +811,41 @@ export default function SettingModule() {
               <div style={{ fontSize: '9px', color: '#555' }}>
                 {formData.receiptHeader}
               </div>
+            </div>
+          </div>
+
+          {/* Live QRIS Barcode Preview */}
+          <div className="glass-panel" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              <QrCode size={14} />
+              <span>Live Preview Barcode QRIS Toko</span>
+            </div>
+
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '10px',
+              padding: '14px',
+              textAlign: 'center',
+              border: '1px solid #cbd5e1',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <img
+                src={formData.qrisUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=POS_PRIMA_DEMO_QRIS'}
+                alt="QRIS Preview"
+                style={{ width: '130px', height: '130px', objectFit: 'contain', display: 'block' }}
+                onError={(e) => {
+                  e.target.src = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=POS_PRIMA_DEMO_QRIS';
+                }}
+              />
+              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1e293b' }}>
+                {formData.name || 'QRIS Merchant Resmi'}
+              </div>
+              <span className={`badge ${formData.qrisUrl ? 'badge-success' : 'badge-indigo'}`} style={{ fontSize: '0.7rem' }}>
+                {formData.qrisUrl ? '● Menggunakan Link Gambar Admin' : '○ Menggunakan QR Dinamis Bawaan'}
+              </span>
             </div>
           </div>
         </div>

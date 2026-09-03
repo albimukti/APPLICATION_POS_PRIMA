@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useShift } from '../../context/ShiftContext';
 import { useSettings } from '../../context/SettingsContext';
-import { useCart } from '../../context/CartContext';
 import {
   Sun,
   Moon,
@@ -12,7 +11,6 @@ import {
   Clock,
   LogOut,
   ShoppingBag,
-  ShoppingCart,
   Sliders,
   CheckCircle2,
   AlertCircle,
@@ -31,7 +29,6 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
   const { theme, toggleTheme } = useTheme();
   const { activeShift } = useShift();
   const { settings } = useSettings();
-  const { totalItemsCount, totalAmount, toggleCart, isCartOpen } = useCart();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -194,59 +191,8 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
           </div>
         )}
       </div>
-
-      {/* Right Controls: Top Cart Button with Red Badge Counter, Theme, Notifications, User */}
+      {/* Right Controls: Theme, Notifications, User */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* TOP SHOPPING CART BUTTON WITH RED BADGE NUMBER */}
-        <button
-          onClick={toggleCart}
-          title="Buka Keranjang Belanja Penjualan"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 14px',
-            borderRadius: '999px',
-            background: totalItemsCount > 0 ? 'rgba(5, 150, 105, 0.1)' : 'var(--bg-tertiary)',
-            border: totalItemsCount > 0 ? '1.5px solid var(--emerald-500)' : '1px solid var(--border-glass-strong)',
-            color: 'var(--text-main)',
-            cursor: 'pointer',
-            position: 'relative',
-            fontWeight: 700,
-            fontSize: '0.8125rem',
-            boxShadow: totalItemsCount > 0 ? '0 2px 8px rgba(5, 150, 105, 0.2)' : 'none',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <ShoppingCart size={19} style={{ color: totalItemsCount > 0 ? 'var(--emerald-500)' : 'var(--text-muted)' }} />
-            {totalItemsCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-10px',
-                background: 'linear-gradient(135deg, #f43f5e, #e11d48)',
-                color: '#ffffff',
-                fontSize: '0.7rem',
-                fontWeight: 800,
-                minWidth: '20px',
-                height: '20px',
-                borderRadius: '999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 4px',
-                boxShadow: '0 2px 6px rgba(225, 29, 72, 0.4)',
-                animation: 'scaleUp 0.2s ease'
-              }}>
-                {totalItemsCount}
-              </span>
-            )}
-          </div>
-          <span style={{ fontWeight: 800, marginLeft: totalItemsCount > 0 ? '4px' : '0' }}>
-            {totalItemsCount > 0 ? formatRupiah(totalAmount) : 'Keranjang'}
-          </span>
-        </button>
 
         {/* Admin Shortcut to Module Management */}
         {user?.role === 'admin' && (
@@ -435,7 +381,7 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
                 {user?.name || 'Kasir 1'}
               </span>
               <span style={{ fontSize: '0.65rem', color: 'var(--emerald-500)', fontWeight: 800, textTransform: 'uppercase' }}>
-                {user?.role} 
+                {user?.role}
               </span>
             </div>
           </div>

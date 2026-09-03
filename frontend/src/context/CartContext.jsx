@@ -96,7 +96,7 @@ export function CartProvider({ children }) {
 
   // Calculations
   const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity) - (i.discount || 0), 0);
-  
+
   // Promo calculation
   let promoDiscount = 0;
   if (promo && promo.valid) {

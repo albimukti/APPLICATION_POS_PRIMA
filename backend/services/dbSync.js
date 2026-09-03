@@ -605,6 +605,22 @@ async function deleteCustomerFromDb(id) {
   return query('DELETE FROM customers WHERE id = $1', [id]);
 }
 
+async function persistCategory(category) {
+  return query(`
+    INSERT INTO categories (id, name, slug, icon, color)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      slug = EXCLUDED.slug,
+      icon = EXCLUDED.icon,
+      color = EXCLUDED.color
+  `, [category.id, category.name, category.slug, category.icon || 'Tag', category.color || '#10b981']);
+}
+
+async function deleteCategoryFromDb(id) {
+  return query('DELETE FROM categories WHERE id = $1', [id]);
+}
+
 async function persistProduct(product) {
   return query(`
     INSERT INTO products (id, sku, barcode, name, category_id, category_name, description, price, cost_price, stock, min_stock_alert, unit, image_url, is_active)
@@ -705,6 +721,10 @@ async function persistPromo(promo) {
     promo.minOrderAmount || 0, promo.maxDiscountAmount || 0, promo.quota || 100,
     promo.usedCount || 0, promo.validFrom, promo.validUntil, promo.isActive !== false
   ]);
+}
+
+async function deletePromo(id) {
+  return query('DELETE FROM promo_codes WHERE id = $1', [id]);
 }
 
 async function persistPaymentMethod(pm) {
@@ -836,11 +856,14 @@ module.exports = {
   persistUser,
   persistCustomer,
   deleteCustomerFromDb,
+  persistCategory,
+  deleteCategoryFromDb,
   persistProduct,
   deleteProductFromDb,
   persistTransaction,
   persistShift,
   persistPromo,
+  deletePromo,
   persistPaymentMethod,
   persistEmployee,
   deleteEmployeeFromDb,

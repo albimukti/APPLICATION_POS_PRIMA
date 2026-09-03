@@ -81,3 +81,4 @@ async function startServer() {
 }
 
 startServer();
+// Watch trigger: Category management enabled
