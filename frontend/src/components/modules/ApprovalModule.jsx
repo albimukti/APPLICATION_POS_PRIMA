@@ -269,6 +269,14 @@ export default function ApprovalModule() {
           bg: '#F0FDF4',
           border: '#BBF7D0'
         };
+      case 'CUSTOMER_DELETE':
+        return {
+          label: 'Hapus Data Customer',
+          icon: UserCheck,
+          color: '#DC2626',
+          bg: '#FEF2F2',
+          border: '#FECACA'
+        };
       case 'TRANSACTION_VOID':
         return {
           label: 'Otorisasi VOID Transaksi',

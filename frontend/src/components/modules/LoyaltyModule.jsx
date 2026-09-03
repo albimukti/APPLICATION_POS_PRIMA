@@ -8,29 +8,44 @@ export default function LoyaltyModule() {
   const { user } = useAuth();
   const [rewards, setRewards] = useState([]);
   const [tiers, setTiers] = useState([]);
+  const [currentCustomer, setCurrentCustomer] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const res = await api.getLoyaltyRewards();
-        if (res.success) {
-          setRewards(res.rewards);
-          setTiers(res.tiers);
-        }
-      } catch (err) {
-        console.error('Failed to load loyalty rewards:', err);
+  const loadData = async () => {
+    try {
+      const res = await api.getLoyaltyRewards();
+      if (res.success) {
+        setRewards(res.rewards);
+        setTiers(res.tiers);
       }
+
+      // Load customer data
+      const custRes = await api.getCustomers();
+      if (custRes.success && custRes.customers) {
+        const found = custRes.customers.find(c => 
+          (user && c.userId === user.id) || 
+          (user && c.phone === user.phone) || 
+          c.id === 'cust-1'
+        );
+        if (found) setCurrentCustomer(found);
+      }
+    } catch (err) {
+      console.error('Failed to load loyalty rewards:', err);
     }
+  };
+
+  useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const handleRedeem = async (reward) => {
+    const custId = currentCustomer?.id || 'cust-1';
     try {
-      const res = await api.redeemLoyaltyReward('cust-1', reward.id);
+      const res = await api.redeemLoyaltyReward(custId, reward.id);
       if (res.success) {
         setSuccessMsg(`${res.message}. Kode Voucher: ${res.voucherCode}`);
-        setTimeout(() => setSuccessMsg(null), 5000);
+        loadData(); // Refresh points from database
+        setTimeout(() => setSuccessMsg(null), 6000);
       }
     } catch (err) {
       alert(err.message || 'Gagal menukarkan poin');
@@ -39,7 +54,7 @@ export default function LoyaltyModule() {
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-      <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span className="badge badge-indigo">Modul #11</span>
@@ -49,6 +64,18 @@ export default function LoyaltyModule() {
             ⭐ Program Loyalitas Pelanggan & Reward Poin
           </h2>
         </div>
+
+        {currentCustomer && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-secondary)', padding: '10px 18px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status Member ({currentCustomer.name})</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <span className="badge badge-warning" style={{ fontWeight: 800 }}>{currentCustomer.tier} Member</span>
+                <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f59e0b' }}>⭐ {currentCustomer.points} Poin</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {successMsg && (

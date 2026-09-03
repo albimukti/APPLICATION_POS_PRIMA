@@ -47,4 +47,31 @@ router.put('/:id', authenticateToken, requireRole(['admin', 'cashier']), require
   }
 });
 
+// DELETE /api/customers/:id — Cashier requests approval; admin deletes directly
+router.delete('/:id', authenticateToken, requireRole(['admin', 'cashier']), requireModuleActive('customers'), (req, res) => {
+  try {
+    const customer = dataStore.getCustomerById(req.params.id);
+    if (!customer) return res.status(404).json({ success: false, message: 'Data pelanggan tidak ditemukan' });
+
+    if (req.user.role === 'cashier') {
+      const approval = dataStore.createApprovalRequest({
+        type: 'CUSTOMER_DELETE',
+        title: `Hapus pelanggan: ${customer.name}`,
+        requesterName: req.user.name,
+        requesterRole: req.user.role,
+        requesterId: req.user.id,
+        data: { customerId: customer.id, customerName: customer.name },
+        details: `Kasir meminta penghapusan data pelanggan ${customer.name} (${customer.code}).`,
+        requiredRole: 'admin'
+      });
+      return res.status(202).json({ success: true, requiresApproval: true, message: 'Permintaan hapus dikirim ke Administrator', approval });
+    }
+
+    const deleted = dataStore.deleteCustomer(req.params.id);
+    res.json({ success: true, message: 'Data pelanggan berhasil dihapus', customer: deleted });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

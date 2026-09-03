@@ -54,7 +54,7 @@ async function initPostgres() {
         // quiet error to prevent crash
       });
 
-      pool.connect((err, client, release) => {
+      pool.connect(async (err, client, release) => {
         if (err) {
           console.log(`[Database] Mode: In-Memory Fast Engine (PostgreSQL belum aktif di ${poolConfig.host}:${poolConfig.port} atau kredensial berbeda: ${err.message}).`);
           isPostgresConnected = false;
@@ -68,15 +68,27 @@ async function initPostgres() {
         const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
         if (fs.existsSync(schemaPath)) {
           const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-          client.query(schemaSql, (qErr) => {
+          client.query(schemaSql, async (qErr) => {
             release();
             if (!qErr) {
               console.log(`[Database] ✅ Skema tabel PostgreSQL "${poolConfig.database}" berhasil disinkronkan.`);
+            } else {
+              console.warn(`[Database] Skema query notice:`, qErr.message);
+            }
+            try {
+              const dataStore = require('../services/dataStore');
+              await dataStore.initializeFromDb();
+            } catch (initErr) {
+              console.error('[Database] DataStore init error:', initErr.message);
             }
             resolve(true);
           });
         } else {
           release();
+          try {
+            const dataStore = require('../services/dataStore');
+            await dataStore.initializeFromDb();
+          } catch (initErr) {}
           resolve(true);
         }
       });

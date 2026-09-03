@@ -75,7 +75,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
       'approvals'
     ],
     customer: [
-      'customers', 'products', 'promos', 'loyalty'
+      'transactions', 'products', 'promos', 'loyalty'
     ]
   };
 
@@ -105,7 +105,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
     }
 
     if (currentRole === 'customer') {
-      if (['customers', 'notifications'].includes(modKey)) return 'Portal Member';
+      if (['notifications'].includes(modKey)) return 'Portal Member';
       if (['products', 'promos'].includes(modKey)) return 'Katalog & Belanja';
       if (['loyalty', 'receipts', 'auth'].includes(modKey)) return 'Poin & Struk';
       return 'Lainnya';
@@ -171,7 +171,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
   const categories = getCategoriesForRole();
 
   return (
-    <aside style={{
+    <aside className="app-sidebar" style={{
       width: isOpen ? '275px' : '0px',
       opacity: isOpen ? 1 : 0,
       background: 'var(--bg-secondary)',
@@ -186,37 +186,51 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
       whiteSpace: 'nowrap'
     }}>
       {/* ROLE HEADER CARD */}
-      <div style={{ padding: '16px 16px 8px 16px', minWidth: '275px' }}>
+      <div style={{ padding: '16px 14px 10px 14px', minWidth: '275px' }}>
         {currentRole === 'admin' && (
           <div
             onClick={() => setActiveTab('module_management')}
-            className="glass-panel-hover"
+            className="sidebar-role-card"
             style={{
               padding: '12px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(16, 185, 129, 0.15))',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              cursor: 'pointer'
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.08))',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Crown size={16} style={{ color: 'var(--indigo-500)' }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '7px',
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--indigo-500)'
+                }}>
+                  <Crown size={15} />
+                </div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
                   ADMIN WORKSPACE
                 </span>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px', display: 'flex', alignItems: 'center' }}
                 title="Tutup Sidebar"
               >
                 <PanelLeftClose size={15} />
               </button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
               <span style={{ color: 'var(--emerald-500)', fontWeight: 700 }}>● {stats.active} Modul Aktif</span>
-              <span style={{ color: stats.inactive > 0 ? '#e11d48' : 'var(--text-subtle)', fontWeight: 700 }}>
+              <span style={{ color: stats.inactive > 0 ? '#e11d48' : 'var(--text-subtle)', fontWeight: 600 }}>
                 ● {stats.inactive} Off
               </span>
             </div>
@@ -224,30 +238,44 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
         )}
 
         {currentRole === 'cashier' && (
-          <div style={{
+          <div className="sidebar-role-card" style={{
             padding: '12px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(6, 182, 212, 0.08))',
-            border: '1px solid rgba(5, 150, 105, 0.25)'
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08))',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Store size={16} style={{ color: 'var(--emerald-500)' }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '7px',
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--emerald-500)'
+                }}>
+                  <Store size={15} />
+                </div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
                   KASIR POS TERMINAL
                 </span>
               </div>
               <button
                 onClick={onToggle}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px', display: 'flex', alignItems: 'center' }}
                 title="Tutup Sidebar"
               >
                 <PanelLeftClose size={15} />
               </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              <span>Kasir: <b>{user?.name?.split(' ')[0]}</b></span>
-              <span className={`badge ${activeShift ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.625rem' }}>
+              <span>Kasir: <b style={{ color: 'var(--text-main)' }}>{user?.name ? user.name.split(' ')[0] : 'Siti'}</b></span>
+              <span className={`badge ${activeShift ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.625rem', padding: '2px 7px', borderRadius: '5px' }}>
                 {activeShift ? 'Shift Aktif' : 'Shift Tutup'}
               </span>
             </div>
@@ -255,36 +283,51 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
         )}
 
         {currentRole === 'customer' && (
-          <div style={{
+          <div className="sidebar-role-card" style={{
             padding: '12px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(147, 51, 234, 0.08))',
-            border: '1px solid rgba(217, 119, 6, 0.25)'
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(16, 185, 129, 0.08))',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserCheck size={16} style={{ color: 'var(--amber-500)' }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '7px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--amber-500)'
+                }}>
+                  <UserCheck size={15} />
+                </div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
                   PORTAL MEMBER VIP
                 </span>
               </div>
               <button
                 onClick={onToggle}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px', display: 'flex', alignItems: 'center' }}
                 title="Tutup Sidebar"
               >
                 <PanelLeftClose size={15} />
               </button>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 700 }}>
-              Saldo Poin: ⭐ 450 Poin
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Member: <b style={{ color: 'var(--text-main)' }}>{user?.name ? user.name.split(' ')[0] : 'Budi'}</b></span>
+              <span style={{ color: '#d97706', fontWeight: 800 }}>⭐ Member VIP</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Navigation Menu List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px 24px 12px', minWidth: '275px' }}>
+      <div className="sidebar-navigation" style={{ flex: 1, overflowY: 'auto', padding: '4px 10px 20px 10px', minWidth: '275px' }}>
         {categories.map(cat => {
           const itemsInCat = menuList.filter(item => {
             const itemCat = item.displayCategory || item.category;
@@ -294,16 +337,8 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
           if (itemsInCat.length === 0) return null;
 
           return (
-            <div key={cat} style={{ marginBottom: '16px' }}>
-              <div style={{
-                fontSize: '0.6875rem',
-                fontWeight: 700,
-                color: 'var(--text-subtle)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                padding: '4px 12px',
-                marginBottom: '4px'
-              }}>
+            <div key={cat} className="sidebar-section">
+              <div className="sidebar-section-title">
                 {cat}
               </div>
 
@@ -312,12 +347,10 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
                 const isCurrent = activeTab === item.key;
                 const isDisabled = !item.isActive;
 
-                const isReadOnly = (currentRole === 'cashier' && ['inventory', 'products'].includes(item.key)) ||
-                  (currentRole === 'customer' && ['products', 'promos'].includes(item.key));
-
                 return (
                   <button
                     key={item.key}
+                    className={`sidebar-nav-item${isCurrent ? ' is-active' : ''}`}
                     onClick={() => {
                       if (!isDisabled || currentRole === 'admin') {
                         setActiveTab(item.key);
@@ -329,57 +362,41 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '9px 12px',
-                      borderRadius: 'var(--radius-md)',
+                      borderRadius: '8px',
                       border: 'none',
-                      background: isCurrent 
-                        ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05))' 
-                        : 'transparent',
-                      color: isCurrent 
-                        ? 'var(--emerald-500)' 
-                        : isDisabled 
-                        ? 'var(--text-subtle)' 
-                        : 'var(--text-main)',
                       fontSize: '0.84rem',
                       fontWeight: isCurrent ? 700 : 500,
                       cursor: isDisabled && currentRole !== 'admin' ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.15s ease',
-                      borderLeft: isCurrent ? '3px solid var(--emerald-500)' : '3px solid transparent',
                       marginBottom: '2px',
                       opacity: isDisabled ? 0.6 : 1
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Icon size={17} style={{ color: isCurrent ? 'var(--emerald-500)' : isDisabled ? 'var(--text-subtle)' : 'var(--text-muted)' }} />
-                      <span>{item.name}</span>
+                      <Icon size={16} style={{ color: isCurrent ? 'var(--emerald-500)' : isDisabled ? 'var(--text-subtle)' : 'var(--text-muted)' }} />
+                      <span style={{ color: isCurrent ? 'var(--emerald-600)' : 'inherit' }}>{item.name}</span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {isReadOnly && (
-                        <span style={{ fontSize: '0.625rem', color: '#38bdf8', background: 'rgba(6, 182, 212, 0.15)', padding: '2px 5px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          <Eye size={10} /> Lihat
-                        </span>
-                      )}
-
                       {isDisabled && (
-                        <span className="badge badge-danger" style={{ fontSize: '0.625rem', padding: '2px 6px' }}>
-                          <Lock size={10} /> Off
+                        <span className="badge badge-danger" style={{ fontSize: '0.625rem', padding: '1px 5px' }}>
+                          <Lock size={9} /> Off
                         </span>
                       )}
 
                       {item.key === 'module_management' && (
-                        <span className="badge badge-indigo" style={{ fontSize: '0.625rem', padding: '2px 6px' }}>
+                        <span className="badge badge-indigo" style={{ fontSize: '0.625rem', padding: '1px 5px' }}>
                           #16
                         </span>
                       )}
 
                       {item.key === 'audit_logs' && (
-                        <span className="badge badge-success" style={{ fontSize: '0.625rem', padding: '2px 6px' }}>
+                        <span className="badge badge-success" style={{ fontSize: '0.625rem', padding: '1px 5px' }}>
                           Live
                         </span>
                       )}
 
                       {item.key === 'approvals' && (
-                        <span className={`badge ${currentRole === 'admin' ? 'badge-indigo' : 'badge-success'}`} style={{ fontSize: '0.625rem', padding: '2px 6px' }}>
+                        <span className={`badge ${currentRole === 'admin' ? 'badge-indigo' : 'badge-success'}`} style={{ fontSize: '0.625rem', padding: '1px 5px' }}>
                           {currentRole === 'admin' ? 'Pusat' : 'Member'}
                         </span>
                       )}
@@ -393,10 +410,9 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
       </div>
 
       {/* FOOTER BAR */}
-      <div style={{
-        padding: '12px 16px',
+      <div className="sidebar-footer" style={{
+        padding: '10px 14px',
         borderTop: '1px solid var(--border-glass)',
-        background: 'var(--bg-primary)',
         fontSize: '0.75rem',
         display: 'flex',
         alignItems: 'center',
@@ -405,7 +421,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {settings?.store?.logoUrl ? (
-            <img src={settings.store.logoUrl} alt="Logo" style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'cover' }} />
+            <img src={settings.store.logoUrl} alt="Logo" style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'cover' }} />
           ) : (
             <span style={{
               width: '8px',
@@ -415,9 +431,9 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
               display: 'inline-block'
             }} />
           )}
-          <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{appName}</span>
+          <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.8rem' }}>{appName}</span>
         </div>
-        <span className="badge badge-indigo" style={{ fontSize: '0.6875rem', textTransform: 'capitalize' }}>
+        <span className="badge badge-indigo" style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '6px', textTransform: 'capitalize' }}>
           Role: {currentRole}
         </span>
       </div>

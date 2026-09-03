@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { formatRupiah, formatDate } from '../../utils/formatters';
@@ -21,6 +21,8 @@ import {
   Tag,
   ArrowRight,
   UserCheck
+  ,Edit3,
+  Trash2
 } from 'lucide-react';
 
 export default function CustomerModule() {
@@ -32,6 +34,7 @@ export default function CustomerModule() {
   const [promos, setPromos] = useState([]);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', address: '', points: '0' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,16 +81,39 @@ export default function CustomerModule() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.createCustomer(formData);
+      if (editingCustomer) {
+        await api.updateCustomer(editingCustomer.id, formData);
+      } else {
+        await api.createCustomer(formData);
+      }
       setIsModalOpen(false);
+      setEditingCustomer(null);
       setFormData({ name: '', email: '', phone: '', address: '', points: '0' });
-      setSuccessMsg('Pelanggan baru berhasil didaftarkan');
+      setSuccessMsg(editingCustomer ? 'Data pelanggan berhasil diperbarui' : 'Pelanggan baru berhasil didaftarkan');
       loadData();
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err) {
       alert(err.message || 'Gagal menambahkan member');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (customer) => {
+    setEditingCustomer(customer);
+    setFormData({ name: customer.name || '', email: customer.email || '', phone: customer.phone || '', address: customer.address || '', points: String(customer.points || 0) });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (customer) => {
+    if (!window.confirm(`Hapus data pelanggan ${customer.name}?`)) return;
+    try {
+      const res = await api.deleteCustomer(customer.id);
+      setSuccessMsg(res.requiresApproval ? 'Permintaan hapus dikirim ke Administrator' : 'Data pelanggan berhasil dihapus');
+      loadData();
+      setTimeout(() => setSuccessMsg(null), 3500);
+    } catch (err) {
+      alert(err.message || 'Gagal menghapus pelanggan');
     }
   };
 
@@ -116,17 +142,19 @@ export default function CustomerModule() {
 
   // ================= CUSTOMER PORTAL VIEW =================
   if (user?.role === 'customer') {
-    const cust = singleCustomer || {
+    const cust = singleCustomer || 
+      customers.find(c => (user && c.userId === user.id) || (user && c.phone === user.phone) || c.id === 'cust-1') || 
+      customers[0] || {
       id: 'cust-1',
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '081377889900',
-      address: 'Jl. Sudirman No. 45, Jakarta Pusat',
-      code: 'MBR-001',
+      name: user.name || 'Budi Santoso',
+      email: user.email || 'budi@customer.id',
+      phone: user.phone || '081234567891',
+      address: 'Jl. Sudirman No. 45, Senayan, Jakarta Pusat',
+      code: 'CUST-001',
       tier: 'Gold',
-      points: 450,
-      totalSpent: 3450000,
-      transactionCount: 18
+      points: 350,
+      totalSpent: 1250000,
+      transactionCount: 8
     };
 
     const myTransactions = transactions.filter(t => t.customerId === cust.id || t.customerName === cust.name || !t.customerId);
@@ -349,6 +377,13 @@ export default function CustomerModule() {
     (c.phone && c.phone.includes(search))
   );
 
+  const customerStats = useMemo(() => ({
+    total: customers.length,
+    active: customers.filter(c => c.isActive !== false).length,
+    points: customers.reduce((sum, c) => sum + (Number(c.points) || 0), 0),
+    spending: customers.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0)
+  }), [customers]);
+
   return (
     <div style={{
       padding: '24px',
@@ -360,7 +395,7 @@ export default function CustomerModule() {
       width: '100%',
       boxSizing: 'border-box'
     }}>
-      <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="glass-panel customer-directory-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span className="badge badge-indigo">Modul #4</span>
@@ -371,7 +406,7 @@ export default function CustomerModule() {
           </h2>
         </div>
 
-        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+            <button onClick={() => { setEditingCustomer(null); setFormData({ name: '', email: '', phone: '', address: '', points: '0' }); setIsModalOpen(true); }} className="btn btn-primary">
           <Plus size={18} />
           <span>Tambah Pelanggan Baru</span>
         </button>
@@ -384,9 +419,17 @@ export default function CustomerModule() {
         </div>
       )}
 
+      {/* Summary Metrics */}
+      <div className="customer-directory-stats">
+        <div className="glass-panel customer-stat-card"><span>Total Customer</span><strong>{customerStats.total}</strong><small>Member terdaftar</small></div>
+        <div className="glass-panel customer-stat-card"><span>Customer Aktif</span><strong>{customerStats.active}</strong><small>Siap dilayani kasir</small></div>
+        <div className="glass-panel customer-stat-card"><span>Total Poin</span><strong>{customerStats.points.toLocaleString('id-ID')}</strong><small>Saldo seluruh member</small></div>
+        <div className="glass-panel customer-stat-card"><span>Total Belanja</span><strong>{formatRupiah(customerStats.spending)}</strong><small>Akumulasi transaksi</small></div>
+      </div>
+
       {/* Filter & Search Bar */}
-      <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ position: 'relative', width: '320px' }}>
+      <div className="glass-panel customer-directory-toolbar" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="customer-directory-search" style={{ position: 'relative', width: '320px' }}>
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
@@ -399,48 +442,32 @@ export default function CustomerModule() {
         </div>
       </div>
 
-      {/* Customers Grid */}
-      <div className="grid-responsive" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-        {filtered.map(cust => (
-          <div key={cust.id} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span className="badge badge-indigo" style={{ fontSize: '0.6875rem' }}>{cust.code}</span>
-                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 700 }}>{cust.name}</h3>
-              </div>
-              <span className="badge" style={{ background: `${getTierColor(cust.tier)}22`, color: getTierColor(cust.tier), border: `1px solid ${getTierColor(cust.tier)}55` }}>
-                {cust.tier}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Phone size={14} /> {cust.phone || '-'}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={14} /> {cust.email || '-'}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={14} /> {cust.address || '-'}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border-glass)', fontSize: '0.8125rem' }}>
-              <div>
-                <span style={{ color: 'var(--text-subtle)', display: 'block' }}>Total Belanja:</span>
-                <span style={{ fontWeight: 700, color: 'var(--emerald-500)' }}>{formatRupiah(cust.totalSpent)}</span>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ color: 'var(--text-subtle)', display: 'block' }}>Saldo Poin:</span>
-                <span style={{ fontWeight: 800, color: '#fbbf24' }}>⭐ {cust.points}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Customer Directory Table */}
+      <div className="glass-panel customer-directory-table-panel">
+        <div className="customer-directory-table-scroll">
+          <table className="customer-directory-table">
+            <thead><tr><th>Customer</th><th>Kontak</th><th>Tier</th><th>Total Belanja</th><th>Poin</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody>
+              {filtered.map(cust => (
+                <tr key={cust.id}>
+                  <td><div className="customer-name-cell"><span className="customer-avatar">{cust.name?.charAt(0).toUpperCase()}</span><div><strong>{cust.name}</strong><small>{cust.code}</small></div></div></td>
+                  <td><div className="customer-contact-cell"><span>{cust.phone || '-'}</span><small>{cust.email || 'Email belum diisi'}</small></div></td>
+                  <td><span className="badge" style={{ background: `${getTierColor(cust.tier)}22`, color: getTierColor(cust.tier), border: `1px solid ${getTierColor(cust.tier)}55` }}>{cust.tier || 'Bronze'}</span></td>
+                  <td className="customer-money">{formatRupiah(cust.totalSpent)}</td>
+                  <td className="customer-points">{Number(cust.points || 0).toLocaleString('id-ID')}</td>
+                  <td><span className={`badge ${cust.isActive === false ? 'badge-danger' : 'badge-success'}`}>{cust.isActive === false ? 'Nonaktif' : 'Aktif'}</span></td>
+                  <td><div className="customer-actions"><button type="button" className="btn btn-secondary" onClick={() => handleEdit(cust)} title="Edit customer"><Edit3 size={14} /></button><button type="button" className="btn btn-danger" onClick={() => handleDelete(cust)} title="Hapus customer"><Trash2 size={14} /></button></div></td>
+                </tr>
+              ))}
+              {!filtered.length && <tr><td colSpan="7" className="customer-empty-state">Tidak ada customer yang cocok dengan pencarian.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="customer-directory-footer">Menampilkan <b>{filtered.length}</b> dari <b>{customers.length}</b> customer</div>
       </div>
 
       {/* Add Customer Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Pendaftaran Pelanggan / Member Baru" maxWidth="500px" icon={Users}>
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingCustomer(null); }} title={editingCustomer ? 'Edit Data Pelanggan' : 'Pendaftaran Pelanggan / Member Baru'} maxWidth="500px" icon={Users}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div className="form-group">
             <label className="form-label">Nama Lengkap:</label>

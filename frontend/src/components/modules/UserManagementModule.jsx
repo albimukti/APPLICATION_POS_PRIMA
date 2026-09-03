@@ -15,7 +15,7 @@ export default function UserManagementModule() {
   const loadData = async () => {
     try {
       const res = await api.getUsers();
-      if (res.success) setUsers(res.users);
+      if (res.success) setUsers((res.users || []).filter(u => u.role === 'admin' || u.role === 'cashier'));
     } catch (err) {
       console.error('Failed to load users:', err);
     }
@@ -178,7 +178,6 @@ export default function UserManagementModule() {
             >
               <option value="cashier">Kasir (Terminal POS, Shift, Struk)</option>
               <option value="admin">Admin (Akses Penuh Semua 16 Modul)</option>
-              <option value="customer">Customer (Portal Pelanggan & Poin)</option>
             </select>
           </div>
 

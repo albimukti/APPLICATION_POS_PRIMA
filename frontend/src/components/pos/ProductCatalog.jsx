@@ -21,6 +21,7 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [quantityDrafts, setQuantityDrafts] = useState({});
 
   useEffect(() => {
     async function loadData() {
@@ -153,7 +154,7 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                     {/* Image container - ENLARGED TO 160px FOR HIGH CLARITY */}
                     <div style={{
                       width: '100%',
-                      height: '160px',
+                      height: '210px',
                       borderRadius: '10px',
                       overflow: 'hidden',
                       marginBottom: '10px',
@@ -266,9 +267,43 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                           </button>
 
                           <div style={{ textAlign: 'center', padding: '0 4px' }}>
-                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--emerald-500)', display: 'block', lineHeight: 1.1 }}>
-                              {inCartQty} {product.unit}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                              <input
+                                type="number"
+                                min="1"
+                                max={product.stock}
+                                value={quantityDrafts[product.id] ?? inCartQty}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  setQuantityDrafts(prev => ({ ...prev, [product.id]: e.target.value }));
+                                }}
+                                onBlur={(e) => {
+                                  const typedQty = Number(e.target.value);
+                                  if (Number.isFinite(typedQty) && typedQty >= 1) updateQuantity(product.id, Math.min(typedQty, product.stock));
+                                  setQuantityDrafts(prev => {
+                                    const next = { ...prev };
+                                    delete next[product.id];
+                                    return next;
+                                  });
+                                }}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                aria-label={`Jumlah ${product.name}`}
+                                style={{
+                                  width: '52px',
+                                  height: '28px',
+                                  textAlign: 'center',
+                                  border: '1px solid var(--border-glass-strong)',
+                                  borderRadius: '6px',
+                                  background: 'var(--bg-secondary)',
+                                  color: 'var(--emerald-500)',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem'
+                                }}
+                              />
+                              <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--emerald-500)' }}>
+                                {product.unit}
+                              </span>
+                            </div>
                             <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>
                               {formatRupiah(product.price * inCartQty)}
                             </span>
@@ -280,7 +315,7 @@ export default function ProductCatalog({ onOpenScanner, onOpenPayment }) {
                             onClick={(e) => {
                               e.stopPropagation();
                               if (inCartQty < product.stock) {
-                                addItem(product);
+                                updateQuantity(product.id, inCartQty + 1);
                               } else {
                                 alert('Mencapai batas stok yang tersedia');
                               }

@@ -7,7 +7,8 @@ const { requireModuleActive } = require('../middleware/moduleGuard');
 
 // GET /api/users (Admin only)
 router.get('/', authenticateToken, requireRole(['admin']), requireModuleActive('users'), (req, res) => {
-  res.json({ success: true, users: dataStore.getUsers() });
+  const users = dataStore.getUsers().filter(user => ['admin', 'cashier'].includes(user.role));
+  res.json({ success: true, users });
 });
 
 // POST /api/users (Admin only)
@@ -16,6 +17,9 @@ router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive(
     const { username, name, email, password, role, phone } = req.body;
     if (!username || !name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Username, nama, email, dan password wajib diisi' });
+    }
+    if (!['admin', 'cashier'].includes(role || 'cashier')) {
+      return res.status(400).json({ success: false, message: 'Manajemen User hanya dapat membuat akun Admin atau Kasir' });
     }
 
     const salt = bcrypt.genSaltSync(10);

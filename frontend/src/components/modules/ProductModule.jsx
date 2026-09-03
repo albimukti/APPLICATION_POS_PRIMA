@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { formatRupiah } from '../../utils/formatters';
 import Modal from '../common/Modal';
 import PaymentModal from '../pos/PaymentModal';
+import CartDrawer from '../pos/CartDrawer';
 import ReceiptModal from '../pos/ReceiptModal';
 import {
   Tag,
@@ -52,6 +53,7 @@ export default function ProductModule() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [quantityDrafts, setQuantityDrafts] = useState({});
 
   const loadData = async () => {
     try {
@@ -269,8 +271,8 @@ export default function ProductModule() {
       {viewMode === 'grid' ? (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-          gap: '20px'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+          gap: '22px'
         }}>
           {filtered.map(p => {
             const cartItem = items.find(i => i.id === p.id);
@@ -299,7 +301,7 @@ export default function ProductModule() {
                   <div
                     style={{
                       width: '100%',
-                      height: '180px',
+                      height: '220px',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       marginBottom: '12px',
@@ -406,9 +408,30 @@ export default function ProductModule() {
                       </button>
 
                       <div style={{ textAlign: 'center', padding: '0 4px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--emerald-500)', display: 'block', lineHeight: 1.1 }}>
-                          {inCartQty} {p.unit}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            max={p.stock}
+                            value={quantityDrafts[p.id] ?? inCartQty}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              setQuantityDrafts(prev => ({ ...prev, [p.id]: e.target.value }));
+                            }}
+                            onBlur={(e) => {
+                              const typedQty = Number(e.target.value);
+                              if (Number.isFinite(typedQty) && typedQty >= 1) updateQuantity(p.id, Math.min(typedQty, p.stock));
+                              setQuantityDrafts(prev => {
+                                const next = { ...prev };
+                                delete next[p.id];
+                                return next;
+                              });
+                            }}
+                            aria-label={`Jumlah ${p.name}`}
+                            style={{ width: '52px', height: '28px', textAlign: 'center', border: '1px solid var(--border-glass-strong)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--emerald-500)', fontWeight: 800, fontSize: '0.9rem' }}
+                          />
+                          <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--emerald-500)' }}>{p.unit}</span>
+                        </div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 700 }}>
                           {formatRupiah(p.price * inCartQty)}
                         </span>
@@ -417,7 +440,7 @@ export default function ProductModule() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (inCartQty < p.stock) addItem(p);
+                          if (inCartQty < p.stock) updateQuantity(p.id, inCartQty + 1);
                           else alert('Mencapai batas stok');
                         }}
                         className="btn-stepper-plus"
@@ -534,13 +557,30 @@ export default function ProductModule() {
                           >
                             <Minus size={14} />
                           </button>
-                          <span style={{ fontWeight: 800, minWidth: '36px', textAlign: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
-                            {inCartQty}
-                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            max={p.stock}
+                            value={quantityDrafts[p.id] ?? inCartQty}
+                            onChange={(e) => {
+                              setQuantityDrafts(prev => ({ ...prev, [p.id]: e.target.value }));
+                            }}
+                            onBlur={(e) => {
+                              const typedQty = Number(e.target.value);
+                              if (Number.isFinite(typedQty) && typedQty >= 1) updateQuantity(p.id, Math.min(typedQty, p.stock));
+                              setQuantityDrafts(prev => {
+                                const next = { ...prev };
+                                delete next[p.id];
+                                return next;
+                              });
+                            }}
+                            aria-label={`Jumlah ${p.name}`}
+                            style={{ width: '48px', height: '28px', textAlign: 'center', border: '1px solid var(--border-glass-strong)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-main)', fontWeight: 800, fontSize: '0.9rem' }}
+                          />
                           <button
                             type="button"
                             onClick={() => {
-                              if (inCartQty < p.stock) addItem(p);
+                              if (inCartQty < p.stock) updateQuantity(p.id, inCartQty + 1);
                               else alert('Mencapai batas stok');
                             }}
                             className="btn-stepper-plus"
@@ -632,6 +672,7 @@ export default function ProductModule() {
       )}
 
       {/* Payment Modal */}
+      <CartDrawer onOpenPayment={() => setIsPaymentOpen(true)} />
       <PaymentModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}

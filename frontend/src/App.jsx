@@ -49,7 +49,7 @@ const allowedKeysByRole = {
     'approvals'
   ],
   customer: [
-    'customers', 'products', 'promos', 'loyalty'
+    'transactions', 'products', 'promos', 'loyalty'
   ]
 };
 
@@ -61,7 +61,7 @@ function AppContent() {
   // Set default initial tab based on role
   const getDefaultTabForRole = (role) => {
     if (role === 'cashier') return 'transactions';
-    if (role === 'customer') return 'customers';
+    if (role === 'customer') return 'transactions';
     return 'dashboard';
   };
 

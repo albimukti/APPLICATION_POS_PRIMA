@@ -67,6 +67,7 @@ export const api = {
   },
   getTransaction: (id) => request(`/transactions/${id}`),
   createTransaction: (data) => request('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+  processTransaction: (id) => request(`/transactions/${id}/process`, { method: 'POST' }),
   voidTransaction: (id, reason) => request(`/transactions/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) }),
 
   // Inventory (#2)
@@ -79,6 +80,7 @@ export const api = {
   getCustomer: (id) => request(`/customers/${id}`),
   createCustomer: (data) => request('/customers', { method: 'POST', body: JSON.stringify(data) }),
   updateCustomer: (id, data) => request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCustomer: (id) => request(`/customers/${id}`, { method: 'DELETE' }),
 
   // Payments (#5)
   getPaymentMethods: () => request('/payments/methods'),

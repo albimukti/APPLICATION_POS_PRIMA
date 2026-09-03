@@ -93,6 +93,8 @@ CREATE TABLE IF NOT EXISTS customers (
     points INT DEFAULT 0,
     total_spent NUMERIC(15, 2) DEFAULT 0,
     transaction_count INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    avatar VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -205,11 +207,15 @@ CREATE TABLE IF NOT EXISTS employees (
     phone VARCHAR(50),
     email VARCHAR(150),
     basic_salary NUMERIC(12, 2) DEFAULT 0,
+    allowance NUMERIC(12, 2) DEFAULT 0,
     commission_rate NUMERIC(5, 2) DEFAULT 0,
     today_attendance VARCHAR(50) DEFAULT 'HADIR', -- 'HADIR', 'IZIN', 'SAKIT', 'ALPHA'
     clock_in_time VARCHAR(50),
     clock_out_time VARCHAR(50),
-    status VARCHAR(50) DEFAULT 'ACTIVE'
+    status VARCHAR(50) DEFAULT 'ACTIVE',
+    avatar VARCHAR(255),
+    bank_account VARCHAR(100),
+    join_date VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -227,4 +233,35 @@ CREATE TABLE IF NOT EXISTS system_settings (
     value JSONB NOT NULL,
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id VARCHAR(50),
+    username VARCHAR(150),
+    role VARCHAR(50),
+    action VARCHAR(100) NOT NULL,
+    target VARCHAR(150),
+    details TEXT,
+    severity VARCHAR(20) DEFAULT 'INFO',
+    ip VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS approvals (
+    id VARCHAR(50) PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    requester_name VARCHAR(150) NOT NULL,
+    requester_role VARCHAR(50) NOT NULL,
+    requester_id VARCHAR(50),
+    data JSONB,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    required_role VARCHAR(50) DEFAULT 'any',
+    category VARCHAR(100),
+    details TEXT,
+    reviewed_by VARCHAR(150),
+    reviewed_at TIMESTAMP,
+    review_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

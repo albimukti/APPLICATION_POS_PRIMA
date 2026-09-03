@@ -81,13 +81,13 @@ export default function ShiftModule() {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {!activeShift ? (
-            <button onClick={() => setIsOpenModal(true)} className="btn btn-primary">
+            <button onClick={() => setIsOpenModal(true)} className="btn btn-primary" style={{ height: '40px', padding: '0 16px', borderRadius: '10px', fontWeight: 700 }}>
               <Play size={16} />
               <span>Buka Shift Kasir Baru</span>
             </button>
           ) : (
-            <button onClick={() => { setActualCashInput(String(activeShift.expectedCash)); setIsCloseModal(true); }} className="btn btn-danger">
-              <Square size={16} />
+            <button onClick={() => { setActualCashInput(String(activeShift.expectedCash)); setIsCloseModal(true); }} className="btn btn-danger" style={{ height: '40px', padding: '0 16px', borderRadius: '10px', fontWeight: 700 }}>
+              <Square size={15} />
               <span>Tutup Shift Sekarang</span>
             </button>
           )}
@@ -95,7 +95,7 @@ export default function ShiftModule() {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', color: 'var(--emerald-600)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
           <CheckCircle2 size={18} />
           <span>{successMsg}</span>
         </div>
@@ -103,43 +103,66 @@ export default function ShiftModule() {
 
       {/* Active Shift Card */}
       {activeShift && (
-        <div className="glass-panel" style={{ padding: '24px', border: '1px solid var(--emerald-500)', background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(99, 102, 241, 0.05))' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock size={24} style={{ color: 'var(--emerald-500)' }} />
+        <div className="glass-panel" style={{
+          padding: '22px 24px',
+          border: '1px solid rgba(16, 185, 129, 0.22)',
+          borderRadius: '16px',
+          background: '#ffffff',
+          boxShadow: '0 8px 30px -4px rgba(16, 185, 129, 0.06)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: 'var(--emerald-500)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Clock size={20} />
+              </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>{activeShift.shiftNumber}</h3>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Kasir: {activeShift.cashierName} (Mulai: {formatDate(activeShift.startTime)})</span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                  {activeShift.shiftNumber}
+                </h3>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  Kasir: <strong style={{ color: 'var(--text-main)' }}>{activeShift.cashierName}</strong> (Mulai: {formatDate(activeShift.startTime)})
+                </span>
               </div>
             </div>
-            <span className="badge badge-success">● Status OPEN</span>
+            <span className="badge badge-success" style={{ fontSize: '0.72rem', padding: '4px 10px' }}>
+              ● Status OPEN
+            </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '14px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Kas Awal (Starting Float):</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+            <div style={{ padding: '16px', borderRadius: '12px', background: '#f8faf9', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Kas Awal (Starting Float):</span>
               <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '4px' }}>
                 {formatRupiah(activeShift.startingCash)}
               </div>
             </div>
 
-            <div style={{ padding: '14px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Penjualan Kas (Tunai):</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', marginTop: '4px' }}>
+            <div style={{ padding: '16px', borderRadius: '12px', background: '#f8faf9', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Penjualan Kas (Tunai):</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--emerald-500)', marginTop: '4px' }}>
                 {formatRupiah(activeShift.cashSales)}
               </div>
             </div>
 
-            <div style={{ padding: '14px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Penjualan Non-Tunai:</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#818cf8', marginTop: '4px' }}>
+            <div style={{ padding: '16px', borderRadius: '12px', background: '#f8faf9', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Penjualan Non-Tunai:</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--indigo-500)', marginTop: '4px' }}>
                 {formatRupiah(activeShift.nonCashSales)}
               </div>
             </div>
 
-            <div style={{ padding: '14px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estimasi Kas Fisik Sistem:</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--emerald-500)', marginTop: '4px' }}>
+            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald-600)' }}>Estimasi Kas Fisik Sistem:</span>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--emerald-600)', marginTop: '4px' }}>
                 {formatRupiah(activeShift.expectedCash)}
               </div>
             </div>

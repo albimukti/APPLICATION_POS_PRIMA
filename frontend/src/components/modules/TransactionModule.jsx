@@ -37,6 +37,7 @@ export default function TransactionModule() {
   const [voidTrxTarget, setVoidTrxTarget] = useState(null);
   const [voidReason, setVoidReason] = useState('');
   const [isVoiding, setIsVoiding] = useState(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(null);
 
   const loadTransactions = async () => {
     try {
@@ -71,6 +72,18 @@ export default function TransactionModule() {
       alert(err.message || 'Gagal membatalkan transaksi');
     } finally {
       setIsVoiding(false);
+    }
+  };
+
+  const handleProcessOrder = async (transaction) => {
+    setIsProcessingOrder(transaction.id);
+    try {
+      await api.processTransaction(transaction.id);
+      loadTransactions();
+    } catch (err) {
+      alert(err.message || 'Gagal memproses pesanan customer');
+    } finally {
+      setIsProcessingOrder(null);
     }
   };
 
@@ -121,7 +134,7 @@ export default function TransactionModule() {
               <span>Lihat Keranjang ({totalItemsCount} Item • {formatRupiah(totalAmount)})</span>
             </button>
           )}
-          <span className="badge badge-indigo">Modul #1 - Kasir</span>
+            <span className="badge badge-indigo">{user?.role === 'customer' ? 'Katalog Produk & Checkout' : 'Modul #1 - Kasir'}</span>
         </div>
       </div>
 
@@ -190,8 +203,8 @@ export default function TransactionModule() {
                       {formatRupiah(trx.totalAmount)}
                     </td>
                     <td style={{ padding: '12px' }}>
-                      <span className={`badge ${trx.status === 'COMPLETED' ? 'badge-success' : 'badge-danger'}`}>
-                        {trx.status === 'COMPLETED' ? '● LUNAS' : '○ VOID'}
+                        <span className={`badge ${trx.status === 'COMPLETED' ? 'badge-success' : trx.status === 'PENDING' ? 'badge-warning' : 'badge-danger'}`}>
+                        {trx.status === 'COMPLETED' ? '● LUNAS' : trx.status === 'PENDING' ? '◷ MENUNGGU PROSES' : '○ VOID'}
                       </span>
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -204,6 +217,17 @@ export default function TransactionModule() {
                         >
                           <Receipt size={14} /> Struk
                         </button>
+                        {trx.status === 'PENDING' && (user?.role === 'admin' || user?.role === 'cashier') && (
+                          <button
+                            onClick={() => handleProcessOrder(trx)}
+                            className="btn btn-primary"
+                            disabled={isProcessingOrder === trx.id}
+                            style={{ padding: '5px 10px', fontSize: '0.75rem' }}
+                            title="Proses pesanan customer"
+                          >
+                            <CheckCircle2 size={14} /> {isProcessingOrder === trx.id ? 'Memproses...' : 'Proses'}
+                          </button>
+                        )}
                         {trx.status === 'COMPLETED' && (user?.role === 'admin' || user?.role === 'cashier') && (
                           <button
                             onClick={() => setVoidTrxTarget(trx)}

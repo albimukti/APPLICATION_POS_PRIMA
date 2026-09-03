@@ -41,10 +41,12 @@ router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive(
 
 // PUT /api/promos/:id/toggle (Admin only)
 router.put('/:id/toggle', authenticateToken, requireRole(['admin']), requireModuleActive('promos'), (req, res) => {
-  const promo = dataStore.promos.find(p => p.id === req.params.id);
-  if (!promo) return res.status(404).json({ success: false, message: 'Promo tidak ditemukan' });
-  promo.isActive = !promo.isActive;
-  res.json({ success: true, message: `Promo ${promo.code} ${promo.isActive ? 'diaktifkan' : 'dinonaktifkan'}`, promo });
+  try {
+    const promo = dataStore.togglePromo(req.params.id);
+    res.json({ success: true, message: `Promo ${promo.code} ${promo.isActive ? 'diaktifkan' : 'dinonaktifkan'}`, promo });
+  } catch (err) {
+    res.status(404).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

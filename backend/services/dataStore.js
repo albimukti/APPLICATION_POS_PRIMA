@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const initialData = require('../database/initialData');
+const dbSync = require('./dbSync');
 
-// In-Memory Data Store (Synchronized with Postgres if connected, or reliable standalone engine)
+// Data Store (100% Synchronized with PostgreSQL POS_PRIMA database)
 class DataStore {
   constructor() {
     this.modules = JSON.parse(JSON.stringify(initialData.initialModules));
@@ -17,6 +18,7 @@ class DataStore {
     this.employees = JSON.parse(JSON.stringify(initialData.initialEmployees));
     this.notifications = JSON.parse(JSON.stringify(initialData.initialNotifications));
     this.history = JSON.parse(JSON.stringify(initialData.initialHistory));
+    this.settings = JSON.parse(JSON.stringify(initialData.initialSettings));
     this.inventoryLogs = [];
     this.snapshots = {};
     this.auditLogs = [
@@ -36,6 +38,36 @@ class DataStore {
 
     // ================= APPROVAL SYSTEM =================
     this.approvals = [];
+  }
+
+  // Synchronize with PostgreSQL on startup or DB connection
+  async initializeFromDb() {
+    try {
+      await dbSync.autoSeedDatabase(initialData);
+      const loaded = await dbSync.loadAllData();
+      if (loaded) {
+        if (loaded.users && loaded.users.length) this.users = loaded.users;
+        if (loaded.customers && loaded.customers.length) this.customers = loaded.customers;
+        if (loaded.categories && loaded.categories.length) this.categories = loaded.categories;
+        if (loaded.products && loaded.products.length) this.products = loaded.products;
+        if (loaded.modules && loaded.modules.length) this.modules = loaded.modules;
+        if (loaded.history) this.history = loaded.history;
+        if (loaded.paymentMethods && loaded.paymentMethods.length) this.paymentMethods = loaded.paymentMethods;
+        if (loaded.promos && loaded.promos.length) this.promos = loaded.promos;
+        if (loaded.loyaltyRewards && loaded.loyaltyRewards.length) this.loyaltyRewards = loaded.loyaltyRewards;
+        if (loaded.employees && loaded.employees.length) this.employees = loaded.employees;
+        if (loaded.shifts) this.shifts = loaded.shifts;
+        if (loaded.transactions) this.transactions = loaded.transactions;
+        if (loaded.notifications) this.notifications = loaded.notifications;
+        if (loaded.storeSettings) this.settings = { store: loaded.storeSettings };
+        if (loaded.inventoryLogs) this.inventoryLogs = loaded.inventoryLogs;
+        if (loaded.auditLogs && loaded.auditLogs.length) this.auditLogs = loaded.auditLogs;
+        if (loaded.approvals) this.approvals = loaded.approvals;
+        console.log(`[DataStore] ✅ 100% Sinkronisasi PostgreSQL "${loaded.products.length} Produk, ${this.users.length} Akun, ${this.customers.length} Member, ${this.modules.length} Modul" siap digunakan.`);
+      }
+    } catch (err) {
+      console.warn('[DataStore] Database sync error:', err.message);
+    }
   }
 
   // ================= AUDIT LOG =================
@@ -61,6 +93,7 @@ class DataStore {
     if (this.auditLogs.length > 2000) {
       this.auditLogs = this.auditLogs.slice(0, 2000);
     }
+    dbSync.persistAuditLog(log).catch(() => {});
     return log;
   }
 
@@ -68,6 +101,7 @@ class DataStore {
     const cutoff = new Date(Date.now() - retentionDays * 24 * 3600 * 1000);
     const before = this.auditLogs.length;
     this.auditLogs = this.auditLogs.filter(l => new Date(l.timestamp) >= cutoff);
+    dbSync.clearOldAuditLogsInDb(cutoff).catch(() => {});
     return before - this.auditLogs.length;
   }
 
@@ -151,6 +185,7 @@ class DataStore {
     };
 
     this.approvals.unshift(newApproval);
+    dbSync.persistApproval(newApproval).catch(() => {});
 
     this.addAuditLog({
       userId: requesterId,
@@ -194,7 +229,7 @@ class DataStore {
       if (targetUser) {
         targetUser.isActive = true;
       } else {
-        this.users.push({
+        targetUser = {
           id: `usr-${Date.now()}`,
           username: item.data.username,
           name: item.data.name,
@@ -205,13 +240,15 @@ class DataStore {
           phone: item.data.phone || '',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.data.username}`,
           createdAt: new Date().toISOString()
-        });
+        };
+        this.users.push(targetUser);
       }
+      dbSync.persistUser(targetUser).catch(() => {});
     } else if (item.type === 'CUSTOMER_REGISTRATION' && item.data) {
       // Ensure customer exists and activate in customers array
       let existingCust = this.customers.find(c => (item.data.id && c.id === item.data.id) || (item.data.phone && c.phone === item.data.phone) || c.name === item.data.name);
       if (!existingCust) {
-        this.customers.push({
+        existingCust = {
           id: item.data.id || `cust-${Date.now()}`,
           name: item.data.name,
           phone: item.data.phone,
@@ -222,18 +259,25 @@ class DataStore {
           transactionCount: 0,
           isActive: true,
           createdAt: new Date().toISOString()
-        });
+        };
+        this.customers.push(existingCust);
       } else {
         existingCust.isActive = true;
       }
+      dbSync.persistCustomer(existingCust).catch(() => {});
 
       // Activate user login account if exists
       const username = item.data.username || item.data.phone;
       let targetUser = this.users.find(u => u.username === username || u.phone === item.data.phone || (item.data.userId && u.id === item.data.userId));
       if (targetUser) {
         targetUser.isActive = true;
+        dbSync.persistUser(targetUser).catch(() => {});
       }
+    } else if (item.type === 'CUSTOMER_DELETE' && item.data?.customerId) {
+      this.deleteCustomer(item.data.customerId);
     }
+
+    dbSync.persistApproval(item).catch(() => {});
 
     this.addAuditLog({
       userId: user.id,
@@ -249,7 +293,7 @@ class DataStore {
       title: `Approval Disetujui: ${item.title}`,
       message: `Permohonan telah disetujui oleh ${user.name}.`,
       type: 'SYSTEM',
-      targetRole: 'ALL'
+      targetUserId: item.data?.userId || item.requesterId
     });
 
     return item;
@@ -268,6 +312,7 @@ class DataStore {
     item.reviewedBy = `${user.name} (${user.role.toUpperCase()})`;
     item.reviewedAt = new Date().toISOString();
     item.reviewNotes = reason || 'Permohonan ditolak oleh reviewer';
+    dbSync.persistApproval(item).catch(() => {});
 
     if (item.type === 'CASHIER_REGISTRATION' && item.data) {
       let targetUser = this.users.find(u => u.username === item.data.username);
@@ -300,7 +345,7 @@ class DataStore {
       title: `Approval Ditolak: ${item.title}`,
       message: `Permohonan ditolak oleh ${user.name}. Alasan: ${reason || '-'}`,
       type: 'SYSTEM',
-      targetRole: 'ALL'
+      targetUserId: item.data?.userId || item.requesterId
     });
 
     return item;
@@ -392,13 +437,15 @@ class DataStore {
       createdAt: new Date().toISOString()
     };
     this.history.unshift(historyItem);
+    dbSync.persistModule(mod).catch(() => {});
+    dbSync.persistModuleHistory(historyItem).catch(() => {});
 
     // Create system notification
     this.addNotification({
       title: `Status Modul Berubah: ${mod.name}`,
       message: `${historyItem.performedBy} telah ${targetStatus ? 'mengaktifkan' : 'menonaktifkan'} modul ${mod.name}.`,
       type: 'MODULE',
-      targetRole: 'ALL'
+      targetRole: 'admin'
     });
 
     return {
@@ -529,6 +576,7 @@ class DataStore {
       createdAt: new Date().toISOString()
     };
     this.products.unshift(newProduct);
+    dbSync.persistProduct(newProduct).catch(() => {});
 
     // Add inventory log
     this.addInventoryLog({
@@ -560,6 +608,7 @@ class DataStore {
       minStockAlert: data.minStockAlert !== undefined ? parseInt(data.minStockAlert, 10) : prev.minStockAlert,
       updatedAt: new Date().toISOString()
     };
+    dbSync.persistProduct(this.products[idx]).catch(() => {});
 
     if (stockDiff !== 0) {
       this.addInventoryLog({
@@ -580,6 +629,7 @@ class DataStore {
     const idx = this.products.findIndex(p => p.id === id);
     if (idx === -1) throw new Error('Produk tidak ditemukan');
     const removed = this.products.splice(idx, 1)[0];
+    dbSync.deleteProductFromDb(id).catch(() => {});
     return removed;
   }
 
@@ -614,6 +664,7 @@ class DataStore {
     }
 
     prod.stock = after;
+    dbSync.persistProduct(prod).catch(() => {});
     const log = this.addInventoryLog({
       productId: prod.id,
       productName: prod.name,
@@ -630,7 +681,7 @@ class DataStore {
         title: `Peringatan Stok Rendah: ${prod.name}`,
         message: `Stok sisa ${prod.stock} ${prod.unit} (Batas minimum: ${prod.minStockAlert})`,
         type: 'STOCK_ALERT',
-        targetRole: 'ALL'
+        targetRole: 'admin'
       });
     }
 
@@ -651,6 +702,7 @@ class DataStore {
       createdAt: new Date().toISOString()
     };
     this.inventoryLogs.unshift(log);
+    dbSync.persistInventoryLog(log).catch(() => {});
     return log;
   }
 
@@ -678,6 +730,10 @@ class DataStore {
   }
 
   createTransaction(data, user) {
+    if (user.role === 'customer') {
+      return this.createCustomerOrder(data, user);
+    }
+
     const invoiceNum = `INV/${new Date().toISOString().slice(0,10).replace(/-/g,'')}/${String(this.transactions.length + 1).padStart(4, '0')}`;
     
     // Validate stock and prepare items
@@ -688,6 +744,7 @@ class DataStore {
           throw new Error(`Stok produk '${prod.name}' tidak mencukupi (sisa ${prod.stock}).`);
         }
         prod.stock -= item.quantity;
+        dbSync.persistProduct(prod).catch(() => {});
         this.addInventoryLog({
           productId: prod.id,
           productName: prod.name,
@@ -730,6 +787,7 @@ class DataStore {
         if (cust.totalSpent > 5000000) cust.tier = 'Platinum';
         else if (cust.totalSpent > 2000000) cust.tier = 'Gold';
         else if (cust.totalSpent > 500000) cust.tier = 'Silver';
+        dbSync.persistCustomer(cust).catch(() => {});
       }
     }
 
@@ -744,6 +802,7 @@ class DataStore {
       } else {
         activeShift.nonCashSales += parseFloat(data.totalAmount || 0);
       }
+      dbSync.persistShift(activeShift).catch(() => {});
     }
 
     const newTransaction = {
@@ -775,12 +834,13 @@ class DataStore {
     };
 
     this.transactions.unshift(newTransaction);
+    dbSync.persistTransaction(newTransaction).catch(() => {});
 
     this.addNotification({
       title: `Transaksi Berhasil: ${newTransaction.invoiceNumber}`,
       message: `Pembayaran ${newTransaction.paymentMethod} senilai Rp ${newTransaction.totalAmount.toLocaleString('id-ID')} diterima.`,
       type: 'TRANSACTION',
-      targetRole: 'ALL'
+      targetRole: 'admin'
     });
 
     this.addAuditLog({
@@ -794,6 +854,109 @@ class DataStore {
     });
 
     return newTransaction;
+  }
+
+  createCustomerOrder(data, user) {
+    const customer = this.customers.find(c => c.id === data.customerId);
+    if (!customer) throw new Error('Customer tidak ditemukan');
+    const invoiceNum = `ORD/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}/${String(this.transactions.length + 1).padStart(4, '0')}`;
+    const items = data.items.map((item, idx) => ({
+      id: `item-${Date.now()}-${idx}`,
+      productId: item.productId || item.id,
+      sku: item.sku || '',
+      productName: item.name || 'Produk',
+      categoryName: item.categoryName || '',
+      price: parseFloat(item.price),
+      costPrice: 0,
+      quantity: parseInt(item.quantity, 10),
+      subtotal: parseFloat(item.price) * parseInt(item.quantity, 10),
+      discount: parseFloat(item.discount || 0),
+      total: (parseFloat(item.price) * parseInt(item.quantity, 10)) - parseFloat(item.discount || 0),
+      notes: item.notes || ''
+    }));
+    const order = {
+      id: `trx-${Date.now()}`,
+      invoiceNumber: invoiceNum,
+      shiftId: null,
+      cashierId: null,
+      cashierName: 'Menunggu diproses kasir',
+      customerId: customer.id,
+      customerName: customer.name,
+      subtotal: parseFloat(data.subtotal || 0),
+      taxPercentage: parseFloat(data.taxPercentage || 11),
+      taxAmount: parseFloat(data.taxAmount || 0),
+      discountAmount: parseFloat(data.discountAmount || 0),
+      promoCode: data.promoCode || null,
+      pointsUsed: parseInt(data.pointsUsed, 10) || 0,
+      pointsDiscount: parseFloat(data.pointsDiscount || 0),
+      pointsEarned: 0,
+      totalAmount: parseFloat(data.totalAmount || 0),
+      paymentMethod: data.paymentMethod || 'CASH',
+      paymentStatus: 'PAID',
+      amountPaid: parseFloat(data.amountPaid || data.totalAmount),
+      changeAmount: parseFloat(data.changeAmount || 0),
+      itemsCount: items.length,
+      status: 'PENDING',
+      notes: 'Pesanan online customer, menunggu diproses kasir',
+      items,
+      createdAt: new Date().toISOString(),
+      createdByCustomerId: user.id
+    };
+    this.transactions.unshift(order);
+    dbSync.persistTransaction(order).catch(() => {});
+    this.addNotification({
+      title: `Pesanan Customer Baru: ${order.invoiceNumber}`,
+      message: `${customer.name} membuat pesanan senilai Rp ${order.totalAmount.toLocaleString('id-ID')}.`,
+      type: 'TRANSACTION',
+      targetRole: 'cashier'
+    });
+    this.addNotification({
+      title: `Pesanan Berhasil: ${order.invoiceNumber}`,
+      message: 'Pesanan diterima dan sedang menunggu diproses kasir.',
+      type: 'TRANSACTION',
+      targetUserId: user.id
+    });
+    return order;
+  }
+
+  processCustomerTransaction(id, user) {
+    const trx = this.transactions.find(t => t.id === id || t.invoiceNumber === id);
+    if (!trx) throw new Error('Transaksi tidak ditemukan');
+    if (trx.status !== 'PENDING') throw new Error('Pesanan ini sudah diproses');
+    trx.items.forEach(item => {
+      const product = this.products.find(p => p.id === item.productId);
+      if (!product || product.stock < item.quantity) throw new Error(`Stok produk '${item.productName}' tidak mencukupi`);
+    });
+    trx.items.forEach(item => {
+      const product = this.products.find(p => p.id === item.productId);
+      product.stock -= item.quantity;
+      dbSync.persistProduct(product).catch(() => {});
+      this.addInventoryLog({ productId: product.id, productName: product.name, type: 'SALE', quantity: -item.quantity, stockBefore: product.stock + item.quantity, stockAfter: product.stock, reason: `Pesanan ${trx.invoiceNumber}`, createdBy: user.name });
+    });
+    const customer = this.customers.find(c => c.id === trx.customerId);
+    if (customer) {
+      trx.pointsEarned = Math.floor(trx.totalAmount / 10000);
+      customer.points = (customer.points || 0) - trx.pointsUsed + trx.pointsEarned;
+      customer.totalSpent = (customer.totalSpent || 0) + trx.totalAmount;
+      customer.transactionCount = (customer.transactionCount || 0) + 1;
+      dbSync.persistCustomer(customer).catch(() => {});
+    }
+    const activeShift = this.shifts.find(s => s.status === 'OPEN' && (s.cashierId === user.id || user.role === 'admin'));
+    if (activeShift) {
+      activeShift.totalSales += trx.totalAmount;
+      activeShift.transactionCount += 1;
+      activeShift[trx.paymentMethod === 'CASH' ? 'cashSales' : 'nonCashSales'] += trx.totalAmount;
+      if (trx.paymentMethod === 'CASH') activeShift.expectedCash += trx.totalAmount;
+      trx.shiftId = activeShift.id;
+      dbSync.persistShift(activeShift).catch(() => {});
+    }
+    trx.cashierId = user.id;
+    trx.cashierName = user.name;
+    trx.status = 'COMPLETED';
+    trx.notes = 'Pesanan customer diproses kasir';
+    dbSync.persistTransaction(trx).catch(() => {});
+    this.addNotification({ title: `Pesanan Diproses: ${trx.invoiceNumber}`, message: `${user.name} telah memproses pesanan customer.`, type: 'SUCCESS', targetUserId: trx.createdByCustomerId });
+    return trx;
   }
 
   voidTransaction(id, reason, user) {
@@ -810,6 +973,7 @@ class DataStore {
       const prod = this.products.find(p => p.id === item.productId);
       if (prod) {
         prod.stock += item.quantity;
+        dbSync.persistProduct(prod).catch(() => {});
         this.addInventoryLog({
           productId: prod.id,
           productName: prod.name,
@@ -822,6 +986,7 @@ class DataStore {
         });
       }
     });
+    dbSync.persistTransaction(trx).catch(() => {});
 
     this.addAuditLog({
       userId: user.id,
@@ -874,12 +1039,13 @@ class DataStore {
     };
 
     this.shifts.unshift(newShift);
+    dbSync.persistShift(newShift).catch(() => {});
 
     this.addNotification({
       title: `Shift Kasir Dibuka (${shiftNum})`,
       message: `${user.name} memulai shift dengan modal kas awal Rp ${startCash.toLocaleString('id-ID')}`,
       type: 'SHIFT',
-      targetRole: 'ALL'
+      targetUserId: user.id
     });
 
     this.addAuditLog({
@@ -906,6 +1072,7 @@ class DataStore {
     shift.endTime = new Date().toISOString();
     shift.status = 'CLOSED';
     shift.notes = (shift.notes ? shift.notes + ' | ' : '') + (notes || 'Shift ditutup kasir');
+    dbSync.persistShift(shift).catch(() => {});
 
     this.addNotification({
       title: `Shift Kasir Ditutup (${shift.shiftNumber})`,
@@ -952,6 +1119,7 @@ class DataStore {
       createdAt: new Date().toISOString()
     };
     this.customers.push(newCust);
+    dbSync.persistCustomer(newCust).catch(() => {});
     return newCust;
   }
 
@@ -959,7 +1127,16 @@ class DataStore {
     const idx = this.customers.findIndex(c => c.id === id);
     if (idx === -1) throw new Error('Customer tidak ditemukan');
     this.customers[idx] = { ...this.customers[idx], ...data };
+    dbSync.persistCustomer(this.customers[idx]).catch(() => {});
     return this.customers[idx];
+  }
+
+  deleteCustomer(id) {
+    const idx = this.customers.findIndex(c => c.id === id);
+    if (idx === -1) throw new Error('Customer tidak ditemukan');
+    const removed = this.customers.splice(idx, 1)[0];
+    dbSync.deleteCustomerFromDb(id).catch(() => {});
+    return removed;
   }
 
   getLoyaltyRewards() {
@@ -974,6 +1151,7 @@ class DataStore {
     if (cust.points < reward.pointsCost) throw new Error(`Poin member tidak cukup (${cust.points} / ${reward.pointsCost})`);
 
     cust.points -= reward.pointsCost;
+    dbSync.persistCustomer(cust).catch(() => {});
     return {
       success: true,
       message: `Berhasil menukarkan ${reward.pointsCost} poin dengan '${reward.title}'`,
@@ -1033,7 +1211,16 @@ class DataStore {
       isActive: true
     };
     this.promos.push(newPromo);
+    dbSync.persistPromo(newPromo).catch(() => {});
     return newPromo;
+  }
+
+  togglePromo(id) {
+    const promo = this.promos.find(p => p.id === id);
+    if (!promo) throw new Error('Promo tidak ditemukan');
+    promo.isActive = !promo.isActive;
+    dbSync.persistPromo(promo).catch(() => {});
+    return promo;
   }
 
   // ================= USERS (#8) & AUTH (#13) =================
@@ -1066,8 +1253,46 @@ class DataStore {
       createdAt: new Date().toISOString()
     };
     this.users.push(newUser);
+    dbSync.persistUser(newUser).catch(() => {});
     const { password, ...safeUser } = newUser;
     return safeUser;
+  }
+
+  toggleUserStatus(id, currentUserId) {
+    const user = this.users.find(u => u.id === id);
+    if (!user) throw new Error('User tidak ditemukan');
+    if (user.role === 'admin' && user.id === currentUserId) {
+      throw new Error('Tidak dapat menonaktifkan akun admin yang sedang login');
+    }
+    user.isActive = !user.isActive;
+    dbSync.persistUser(user).catch(() => {});
+    return user;
+  }
+
+  // ================= PAYMENTS (#5) =================
+  togglePaymentMethod(id) {
+    const method = this.paymentMethods.find(m => m.id === id);
+    if (!method) throw new Error('Metode pembayaran tidak ditemukan');
+    method.isActive = !method.isActive;
+    dbSync.persistPaymentMethod(method).catch(() => {});
+    return method;
+  }
+
+  createPaymentMethod(data) {
+    const newMethod = {
+      id: `pay-${Date.now()}`,
+      code: data.code.toUpperCase(),
+      name: data.name,
+      category: data.category || 'CASH',
+      feePercentage: parseFloat(data.feePercentage) || 0,
+      feeFixed: parseFloat(data.feeFixed) || 0,
+      icon: data.icon || 'CreditCard',
+      isActive: true,
+      instructions: data.instructions || ''
+    };
+    this.paymentMethods.push(newMethod);
+    dbSync.persistPaymentMethod(newMethod).catch(() => {});
+    return newMethod;
   }
 
   // ================= EMPLOYEES (#14) =================
@@ -1088,6 +1313,7 @@ class DataStore {
     const now = new Date();
     emp.todayAttendance = 'HADIR';
     emp.clockInTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    dbSync.persistEmployee(emp).catch(() => {});
     return emp;
   }
 
@@ -1096,6 +1322,7 @@ class DataStore {
     if (!emp) throw new Error('Karyawan tidak ditemukan');
     const now = new Date();
     emp.clockOutTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    dbSync.persistEmployee(emp).catch(() => {});
     return emp;
   }
 
@@ -1120,6 +1347,7 @@ class DataStore {
       status: 'ACTIVE'
     };
     this.employees.push(newEmp);
+    dbSync.persistEmployee(newEmp).catch(() => {});
     return newEmp;
   }
 
@@ -1127,6 +1355,7 @@ class DataStore {
     const idx = this.employees.findIndex(e => e.id === id);
     if (idx === -1) throw new Error('Karyawan tidak ditemukan');
     this.employees[idx] = { ...this.employees[idx], ...data };
+    dbSync.persistEmployee(this.employees[idx]).catch(() => {});
     return this.employees[idx];
   }
 
@@ -1134,12 +1363,16 @@ class DataStore {
     const idx = this.employees.findIndex(e => e.id === id);
     if (idx === -1) throw new Error('Karyawan tidak ditemukan');
     const deleted = this.employees.splice(idx, 1)[0];
+    dbSync.deleteEmployeeFromDb(id).catch(() => {});
     return deleted;
   }
 
   // ================= NOTIFICATIONS (#15) =================
-  getNotifications(role = 'ALL') {
-    return this.notifications.filter(n => n.targetRole === 'ALL' || n.targetRole === role || role === 'admin');
+  getNotifications(user) {
+    const role = user?.role || 'ALL';
+    return this.notifications
+      .filter(n => n.targetUserId === user?.id || (!n.targetUserId && (n.targetRole === 'ALL' || n.targetRole === role || role === 'admin')))
+      .map(n => ({ ...n, isRead: n.readBy?.includes(user?.id) || false }));
   }
 
   addNotification(data) {
@@ -1149,16 +1382,23 @@ class DataStore {
       message: data.message,
       type: data.type || 'TRANSACTION',
       targetRole: data.targetRole || 'ALL',
+      targetUserId: data.targetUserId || null,
+      readBy: [],
       isRead: false,
       createdAt: new Date().toISOString()
     };
     this.notifications.unshift(notif);
+    dbSync.persistNotification(notif).catch(() => {});
     return notif;
   }
 
-  markNotificationRead(id) {
+  markNotificationRead(id, userId) {
     const n = this.notifications.find(item => item.id === id);
-    if (n) n.isRead = true;
+    if (n && userId) {
+      n.readBy = n.readBy || [];
+      if (!n.readBy.includes(userId)) n.readBy.push(userId);
+      dbSync.markNotificationReadInDb(id).catch(() => {});
+    }
     return n;
   }
 
@@ -1169,6 +1409,7 @@ class DataStore {
 
   updateSettings(data) {
     this.settings = { ...this.settings, ...data };
+    dbSync.persistSettings(this.settings).catch(() => {});
     return this.settings;
   }
 

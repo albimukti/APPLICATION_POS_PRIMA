@@ -273,7 +273,10 @@ const initialProducts = [
   }
 ];
 
-// Single fresh admin user with username: admin & password: P@ssw0rd
+const kasirPassword = bcrypt.hashSync('kasir123', salt);
+const customerPassword = bcrypt.hashSync('cust123', salt);
+
+// System core users for all 3 RBAC roles: Admin, Kasir, Customer
 const initialUsers = [
   {
     id: 'usr-admin',
@@ -286,10 +289,51 @@ const initialUsers = [
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
     isActive: true,
     createdAt: new Date().toISOString()
+  },
+  {
+    id: 'usr-cashier',
+    username: 'kasir',
+    name: 'Siti Nurhaliza',
+    email: 'kasir@posprima.id',
+    password: kasirPassword,
+    role: 'cashier',
+    phone: '0813-2233-4455',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=siti',
+    isActive: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'usr-customer',
+    username: 'customer',
+    name: 'Budi Santoso',
+    email: 'budi@customer.id',
+    password: customerPassword,
+    role: 'customer',
+    phone: '081234567891',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=budi',
+    isActive: true,
+    createdAt: new Date().toISOString()
   }
 ];
 
-const initialCustomers = [];
+const initialCustomers = [
+  {
+    id: 'cust-1',
+    userId: 'usr-customer',
+    code: 'CUST-001',
+    name: 'Budi Santoso',
+    email: 'budi@customer.id',
+    phone: '081234567891',
+    address: 'Jl. Sudirman No. 45, Senayan, Jakarta Pusat',
+    tier: 'Gold',
+    points: 350,
+    totalSpent: 1250000,
+    transactionCount: 8,
+    isActive: true,
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=budi',
+    createdAt: new Date().toISOString()
+  }
+];
 
 const initialPromos = [
   {

@@ -306,7 +306,7 @@ export default function AuditLogModule() {
   };
 
   return (
-    <div className="module-container" style={{ paddingBottom: '40px' }}>
+    <div className="module-container audit-log-module" style={{ paddingBottom: '40px' }}>
       {/* Toast Notification */}
       {toastMsg && (
         <div style={{
@@ -331,7 +331,7 @@ export default function AuditLogModule() {
       )}
 
       {/* Module Header */}
-      <div className="module-header" style={{ marginBottom: '24px' }}>
+      <div className="module-header audit-log-header" style={{ marginBottom: '24px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span style={{
@@ -392,7 +392,7 @@ export default function AuditLogModule() {
       </div>
 
       {/* Summary KPI Cards */}
-      <div style={{
+      <div className="audit-log-kpis" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '16px',
@@ -500,10 +500,10 @@ export default function AuditLogModule() {
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '16px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="glass-panel audit-log-toolbar" style={{ padding: '16px 20px', borderRadius: '16px', marginBottom: '20px' }}>
+        <div className="audit-log-toolbar-content" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Search Box */}
-          <div style={{ flex: '1 1 280px', position: 'relative' }}>
+          <div className="audit-log-search" style={{ flex: '1 1 280px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
@@ -516,7 +516,7 @@ export default function AuditLogModule() {
           </div>
 
           {/* Filters Group */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="audit-log-filters" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Role Filter */}
             <select
               className="form-input"
@@ -640,9 +640,9 @@ export default function AuditLogModule() {
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
-        <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <div className="glass-panel audit-log-table-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className="data-table audit-log-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-glass-strong)' }}>
                   <th style={{ padding: '14px 18px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase' }}>Waktu</th>

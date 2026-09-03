@@ -38,16 +38,12 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
   const appName = settings?.store?.appName || 'POS PRIMA';
   const appSubtitle = settings?.store?.appSubtitle || 'Sistem Kasir 16 Modul';
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Pusat Approval Aktif', message: 'Permohonan pendaftaran & otorisasi kasir termonitor secara real-time', time: 'Baru saja', type: 'info', isRead: false },
-    { id: 2, title: 'Stok Kopi Arabika Menipis', message: 'Sisa stok 10 pack, segera jadwalkan restock logistik', time: '15 mnt lalu', type: 'warning', isRead: false },
-    { id: 3, title: 'Shift Kasir Berjalan Normal', message: 'Sesi kasir aktif dan tercatat di audit log', time: '1 jam lalu', type: 'success', isRead: true }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const fetchNotifs = async () => {
     try {
       const res = await api.getNotifications();
-      if (res && res.success && Array.isArray(res.notifications) && res.notifications.length > 0) {
+      if (res && res.success && Array.isArray(res.notifications)) {
         setNotifications(res.notifications.map(n => ({
           id: n.id,
           title: n.title,
@@ -66,12 +62,13 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
     fetchNotifs();
     const interval = setInterval(fetchNotifs, 12000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    await Promise.all(notifications.filter(n => !n.isRead).map(n => api.markNotificationRead(n.id)));
   };
 
   const handleMarkItemRead = (id) => {
