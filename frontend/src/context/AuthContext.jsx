@@ -66,19 +66,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('pos_user', JSON.stringify(res.user));
       return res;
     } catch (err) {
-      // Fallback demo local login jika server backend offline
-      if ((username === 'admin' || username === 'kasir' || username === 'customer') &&
-          (password === 'P@ssw0rd' || password === 'admin' || password === 'kasir123' || password === 'cust123')) {
-        const fallbackRole = username === 'admin' ? 'admin' : username === 'kasir' ? 'cashier' : 'customer';
-        const fallbackUser = fallbackRole === 'admin'
-          ? { id: 'usr-admin', username: 'admin', name: 'Administrator', role: 'admin', email: 'admin@posprima.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' }
-          : fallbackRole === 'cashier'
-          ? { id: 'usr-cashier', username: 'kasir', name: 'Siti Nurhaliza', role: 'cashier', email: 'kasir@posprima.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=siti' }
-          : { id: 'usr-customer', username: 'customer', name: 'Budi Santoso', role: 'customer', email: 'budi@customer.id', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=budi' };
-        setUser(fallbackUser);
-        setToken('demo-token');
-        return { success: true, user: fallbackUser };
-      }
+      // Re-throw error directly so the UI notifies user that password is wrong
       throw err;
     } finally {
       setLoading(false);

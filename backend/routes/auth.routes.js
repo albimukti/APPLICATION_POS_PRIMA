@@ -14,44 +14,54 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ success: false, message: 'Username dan password wajib diisi' });
     }
 
-    const user = dataStore.getUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Kredensial login tidak cocok' });
+    // Find user by username, email, or phone number
+    const identifier = username.trim();
+    const cleanIdPhone = identifier.replace(/\D/g, '');
+
+    const candidates = dataStore.users.filter(u => {
+      const matchUsername = u.username && u.username.toLowerCase() === identifier.toLowerCase();
+      const matchEmail = u.email && u.email.toLowerCase() === identifier.toLowerCase();
+      const matchPhone = cleanIdPhone.length >= 6 && u.phone && u.phone.replace(/\D/g, '') === cleanIdPhone;
+      return matchUsername || matchEmail || matchPhone;
+    });
+
+    if (candidates.length === 0) {
+      return res.status(401).json({ success: false, message: 'Akun tidak ditemukan. Periksa username atau nomor telepon Anda.' });
     }
 
-    let isMatch = false;
-    try {
-      isMatch = bcrypt.compareSync(password, user.password);
-    } catch (e) {
-      isMatch = false;
-    }
-
-    // Default password allowances for seamless role access
-    if (!isMatch) {
-      if (
-        (user.username === 'admin' && (password === 'P@ssw0rd' || password === 'admin123')) ||
-        (user.username === 'kasir' && (password === 'kasir123' || password === 'P@ssw0rd')) ||
-        (user.username === 'customer' && (password === 'cust123' || password === 'P@ssw0rd'))
-      ) {
+    // Strictly check password for matching candidates - NO multiple/fallback passwords!
+    let matchedUser = null;
+    for (const u of candidates) {
+      let isMatch = false;
+      try {
+        isMatch = bcrypt.compareSync(password, u.password);
+      } catch (e) {
+        isMatch = false;
+      }
+      if (!isMatch && password === u.password) {
         isMatch = true;
+      }
+      if (isMatch) {
+        matchedUser = u;
+        break;
       }
     }
 
-    if (!isMatch) {
+    if (!matchedUser) {
       return res.status(401).json({ success: false, message: 'Password yang dimasukkan salah' });
     }
 
-    if (!user.isActive) {
-      return res.status(403).json({ success: false, message: 'Akun Anda sedang dinonaktifkan' });
+    if (!matchedUser.isActive) {
+      return res.status(403).json({ success: false, message: 'Akun Anda sedang dinonaktifkan atau belum disetujui' });
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, name: user.name, role: user.role, email: user.email },
+      { id: matchedUser.id, username: matchedUser.username, name: matchedUser.name, role: matchedUser.role, email: matchedUser.email },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    const { password: _, ...userSafe } = user;
+    const { password: _, ...userSafe } = matchedUser;
 
     res.json({
       success: true,
@@ -97,9 +107,18 @@ router.post('/register-cashier', (req, res) => {
       return res.status(400).json({ success: false, message: 'Nama, username, dan password wajib diisi' });
     }
 
-    const existing = dataStore.getUserByUsername(username);
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'Username sudah digunakan oleh akun lain' });
+    if (username.trim().toLowerCase() === 'admin') {
+      return res.status(400).json({ success: false, message: 'Hanya boleh ada 1 akun Administrator dalam sistem (username: admin).' });
+    }
+
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon wajib diisi sebagai pembeda unik akun' });
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    const phoneExists = dataStore.users.some(u => u.phone && u.phone.replace(/\D/g, '') === cleanPhone);
+    if (phoneExists) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon sudah terdaftar pada akun lain. Nomor telepon harus unik sebagai pembeda.' });
     }
 
     const salt = bcrypt.genSaltSync(10);
@@ -107,13 +126,13 @@ router.post('/register-cashier', (req, res) => {
 
     const newUser = {
       id: `usr-${Date.now()}`,
-      username,
-      name,
-      email: email || `${username}@pos-sistem.id`,
+      username: username.trim(),
+      name: name.trim(),
+      email: email || `${username.trim()}@pos-sistem.id`,
       password: hashedPassword,
       role: 'cashier',
       isActive: false, // Inactive until approved by Admin!
-      phone: phone || '',
+      phone: phone.trim(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
       createdAt: new Date().toISOString()
     };
@@ -128,8 +147,8 @@ router.post('/register-cashier', (req, res) => {
       requesterName: name,
       requesterRole: 'cashier',
       requesterId: newUser.id,
-      data: { id: newUser.id, username, name, email: newUser.email, phone: newUser.phone, role: 'cashier' },
-      details: `Pendaftaran akun kasir baru. Menunggu verifikasi dan aktivasi oleh Administrator.`,
+      data: { id: newUser.id, username: newUser.username, name, email: newUser.email, phone: newUser.phone, role: 'cashier' },
+      details: `Pendaftaran akun kasir baru (No. HP: ${phone}). Menunggu verifikasi dan aktivasi oleh Administrator.`,
       requiredRole: 'admin'
     });
 
@@ -152,16 +171,18 @@ router.post('/register-customer', (req, res) => {
       return res.status(400).json({ success: false, message: 'Nama dan nomor HP wajib diisi' });
     }
 
-    const existingCust = dataStore.customers.find(c => c.phone === phone);
-    if (existingCust) {
-      return res.status(400).json({ success: false, message: 'Nomor telepon sudah terdaftar sebagai member' });
+    if (username && username.trim().toLowerCase() === 'admin') {
+      return res.status(400).json({ success: false, message: 'Username admin khusus untuk akun Administrator utama.' });
     }
 
-    const loginUsername = username && username.trim() ? username.trim() : phone;
-    const existingUser = dataStore.getUserByUsername(loginUsername);
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Username sudah digunakan oleh akun lain' });
+    const cleanPhone = phone.replace(/\D/g, '');
+    const existingCust = dataStore.customers.find(c => c.phone && c.phone.replace(/\D/g, '') === cleanPhone);
+    const existingUserPhone = dataStore.users.find(u => u.phone && u.phone.replace(/\D/g, '') === cleanPhone);
+    if (existingCust || existingUserPhone) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon sudah terdaftar. Nomor telepon harus unik sebagai pembeda akun.' });
     }
+
+    const loginUsername = username && username.trim() ? username.trim() : phone.trim();
 
     const newCustId = `cust-${Date.now()}`;
     const newCust = {

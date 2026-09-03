@@ -69,6 +69,14 @@ async function initPostgres() {
         if (fs.existsSync(schemaPath)) {
           const schemaSql = fs.readFileSync(schemaPath, 'utf8');
           client.query(schemaSql, async (qErr) => {
+            try {
+              await client.query(`
+                ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key;
+                ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
+                CREATE UNIQUE INDEX IF NOT EXISTS users_phone_unique_idx ON users (phone) WHERE phone IS NOT NULL AND phone != '';
+              `);
+            } catch (_) {}
+
             release();
             if (!qErr) {
               console.log(`[Database] Skema tabel PostgreSQL "${poolConfig.database}" berhasil disinkronkan.`);

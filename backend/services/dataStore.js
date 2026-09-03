@@ -1237,17 +1237,28 @@ class DataStore {
   }
 
   createUser(data) {
-    const existing = this.users.find(u => u.username === data.username || u.email === data.email);
-    if (existing) throw new Error('Username atau email sudah digunakan');
+    if (data.role === 'admin' || data.username.toLowerCase() === 'admin') {
+      throw new Error('Hanya boleh ada 1 akun Administrator dalam sistem (username: admin dengan password P@ssw0rd)');
+    }
+
+    if (!data.phone || !data.phone.trim()) {
+      throw new Error('Nomor telepon wajib diisi sebagai pembeda akun');
+    }
+
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const phoneExists = this.users.some(u => u.phone && u.phone.replace(/\D/g, '') === cleanPhone);
+    if (phoneExists) {
+      throw new Error('Nomor telepon sudah digunakan oleh akun lain. Nomor telepon harus unik sebagai pembeda akun');
+    }
 
     const newUser = {
       id: `usr-${Date.now()}`,
-      username: data.username,
-      name: data.name,
-      email: data.email,
+      username: data.username.trim(),
+      name: data.name.trim(),
+      email: data.email.trim(),
       password: data.password, // hashed before passed
       role: data.role || 'cashier',
-      phone: data.phone || '',
+      phone: data.phone.trim(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
       isActive: true,
       createdAt: new Date().toISOString()

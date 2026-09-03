@@ -18,23 +18,34 @@ router.post('/', authenticateToken, requireRole(['admin']), requireModuleActive(
     if (!username || !name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Username, nama, email, dan password wajib diisi' });
     }
-    if (!['admin', 'cashier'].includes(role || 'cashier')) {
-      return res.status(400).json({ success: false, message: 'Manajemen User hanya dapat membuat akun Admin atau Kasir' });
+
+    if (role === 'admin' || username.trim().toLowerCase() === 'admin') {
+      return res.status(400).json({ success: false, message: 'Hanya boleh ada 1 akun Administrator dalam sistem (username: admin dengan password P@ssw0rd).' });
+    }
+
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon wajib diisi sebagai pembeda unik akun' });
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    const phoneExists = dataStore.users.some(u => u.phone && u.phone.replace(/\D/g, '') === cleanPhone);
+    if (phoneExists) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon sudah terdaftar pada akun lain. Nomor telepon harus unik sebagai pembeda.' });
     }
 
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt);
 
     const user = dataStore.createUser({
-      username,
-      name,
-      email,
+      username: username.trim(),
+      name: name.trim(),
+      email: email.trim(),
       password: hashedPassword,
-      role: role || 'cashier',
-      phone: phone || ''
+      role: 'cashier',
+      phone: phone.trim()
     });
 
-    res.status(201).json({ success: true, message: 'User berhasil dibuat', user });
+    res.status(201).json({ success: true, message: 'User kasir berhasil dibuat', user });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

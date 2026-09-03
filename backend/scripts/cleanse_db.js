@@ -34,7 +34,8 @@ async function cleanseDatabase() {
         customers,
         promo_codes,
         loyalty_rewards,
-        employees
+        employees,
+        users
       CASCADE;
     `);
 
