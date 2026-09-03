@@ -62,7 +62,7 @@ export default function UserManagementModule() {
             <span className="badge badge-success">{users.length} Akun Terdaftar</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            🔐 Manajemen Pengguna & Hak Akses (RBAC)
+             Manajemen Pengguna & Hak Akses (RBAC)
           </h2>
         </div>
 

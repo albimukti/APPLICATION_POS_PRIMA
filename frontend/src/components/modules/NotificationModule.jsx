@@ -52,7 +52,7 @@ export default function NotificationModule() {
             <span className="badge badge-success">{notifications.filter(n => !n.isRead).length} Belum Dibaca</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            🔔 Pusat Pemberitahuan & Notifikasi Sistem
+             Pusat Pemberitahuan & Notifikasi Sistem
           </h2>
         </div>
       </div>

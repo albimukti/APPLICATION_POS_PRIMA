@@ -233,7 +233,7 @@ export default function SettingModule() {
             {activeTabSub === 'branding' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(79, 70, 229, 0.08)', border: '1px solid rgba(79, 70, 229, 0.25)', fontSize: '0.8125rem', color: 'var(--indigo-500)' }}>
-                  💡 <b>Kustomisasi Logo & Identitas Brand</b>: Unggah logo toko Anda untuk menggantikan seluruh logo di Navbar, Sidebar, Halaman Login, Struk Kasir, dan Footer secara serentak.
+                   <b>Kustomisasi Logo & Identitas Brand</b>: Unggah logo toko Anda untuk menggantikan seluruh logo di Navbar, Sidebar, Halaman Login, Struk Kasir, dan Footer secara serentak.
                 </div>
 
                 {/* 1. UPLOAD LOGO SECTION */}

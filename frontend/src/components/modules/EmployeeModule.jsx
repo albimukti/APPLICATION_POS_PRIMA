@@ -266,7 +266,7 @@ export default function EmployeeModule() {
             </span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            👥 Manajemen Staf, Karyawan & Presensi
+             Manajemen Staf, Karyawan & Presensi
           </h2>
           <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             Kelola data staf toko, shift presensi jam masuk/keluar, struktur departemen & estimasi penggajian
@@ -1114,9 +1114,9 @@ export default function EmployeeModule() {
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
               {[
-                { id: 'HADIR', label: '🟢 HADIR', desc: 'Aktif bertugas shift hari ini', color: '#10b981', border: '#059669', bg: 'rgba(16, 185, 129, 0.12)' },
-                { id: 'BELUM_ABSEN', label: '🟡 BELUM ABSEN', desc: 'Menunggu waktu masuk shift', color: '#f59e0b', border: '#d97706', bg: 'rgba(245, 158, 11, 0.12)' },
-                { id: 'LIBUR', label: '⚪ LIBUR / OFF', desc: 'Hari libur atau cuti staf', color: 'var(--text-muted)', border: 'var(--border-glass-strong)', bg: 'var(--bg-secondary)' }
+                { id: 'HADIR', label: ' HADIR', desc: 'Aktif bertugas shift hari ini', color: '#10b981', border: '#059669', bg: 'rgba(16, 185, 129, 0.12)' },
+                { id: 'BELUM_ABSEN', label: ' BELUM ABSEN', desc: 'Menunggu waktu masuk shift', color: '#f59e0b', border: '#d97706', bg: 'rgba(245, 158, 11, 0.12)' },
+                { id: 'LIBUR', label: ' LIBUR / OFF', desc: 'Hari libur atau cuti staf', color: 'var(--text-muted)', border: 'var(--border-glass-strong)', bg: 'var(--bg-secondary)' }
               ].map(status => {
                 const isSelected = formData.todayAttendance === status.id;
                 return (

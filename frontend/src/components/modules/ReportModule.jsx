@@ -51,7 +51,7 @@ export default function ReportModule() {
             <span className="badge badge-success">Finansial & Penjualan</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            📈 Laporan Penjualan & Analitik Keuangan
+             Laporan Penjualan & Analitik Keuangan
           </h2>
         </div>
 
@@ -96,7 +96,7 @@ export default function ReportModule() {
         {/* Payment Methods Breakdown */}
         <div className="glass-panel" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: 700 }}>
-            💳 Rekapitulasi per Metode Pembayaran
+             Rekapitulasi per Metode Pembayaran
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {summary?.paymentBreakdown && Object.entries(summary.paymentBreakdown).map(([method, amount]) => (
@@ -111,7 +111,7 @@ export default function ReportModule() {
         {/* Cashier Performance */}
         <div className="glass-panel" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: 700 }}>
-            👨‍💼 Kinerja Petugas Kasir
+            ‍ Kinerja Petugas Kasir
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {cashierPerf.map(c => (

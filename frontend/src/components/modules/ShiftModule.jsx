@@ -173,7 +173,7 @@ export default function ShiftModule() {
       {/* Shifts History Table */}
       <div className="glass-panel" style={{ padding: '20px', overflowX: 'auto' }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>
-          📋 Riwayat Rekonsiliasi Shift Kasir
+           Riwayat Rekonsiliasi Shift Kasir
         </h3>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
@@ -195,7 +195,7 @@ export default function ShiftModule() {
                 <td style={{ padding: '12px', fontWeight: 700, color: 'var(--text-main)' }}>{s.shiftNumber}</td>
                 <td style={{ padding: '12px' }}>{s.cashierName}</td>
                 <td style={{ padding: '12px', color: 'var(--text-muted)' }}>
-                  {formatDate(s.startTime)} <br /> ➔ {s.endTime ? formatDate(s.endTime) : 'Sedang Berjalan'}
+                  {formatDate(s.startTime)} <br /> {s.endTime ? formatDate(s.endTime) : 'Sedang Berjalan'}
                 </td>
                 <td style={{ padding: '12px' }}>{formatRupiah(s.startingCash)}</td>
                 <td style={{ padding: '12px', fontWeight: 700, color: 'var(--emerald-500)' }}>{formatRupiah(s.totalSales)}</td>

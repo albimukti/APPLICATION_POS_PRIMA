@@ -69,7 +69,7 @@ export default function PromoModule() {
             <span className="badge badge-success">{promos.filter(p => p.isActive).length} Voucher Aktif</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            🎁 Manajemen Diskon & Voucher Promo
+             Manajemen Diskon & Voucher Promo
           </h2>
         </div>
 

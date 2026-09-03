@@ -65,7 +65,7 @@ export default function DashboardModule({ setActiveTab }) {
             <span className="badge badge-indigo">Role: {user?.role?.toUpperCase()}</span>
           </div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 6px 0', color: 'var(--text-main)' }}>
-            Selamat Datang, {user?.name}! 👋
+            Selamat Datang, {user?.name}! 
           </h2>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             Sistem POS siap melayani transaksi dan memantau performa bisnis Anda secara real-time.
@@ -186,7 +186,7 @@ export default function DashboardModule({ setActiveTab }) {
         {/* Top Selling Products */}
         <div className="glass-panel" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>🔥 Produk Terlaris</h3>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}> Produk Terlaris</h3>
             <button onClick={() => setActiveTab('products')} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
               Lihat Katalog
             </button>
@@ -227,7 +227,7 @@ export default function DashboardModule({ setActiveTab }) {
         {/* 16 Module Grid Quick Access */}
         <div className="glass-panel" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>🎛️ Matriks 16 Modul POS</h3>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}> Matriks 16 Modul POS</h3>
             <button onClick={() => setActiveTab('module_management')} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
               Kelola Modul
             </button>

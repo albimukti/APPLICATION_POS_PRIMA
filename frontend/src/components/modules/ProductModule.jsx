@@ -169,7 +169,7 @@ export default function ProductModule() {
             <span className="badge badge-warning">Fitur + / - & Checkout Aktif</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-            🏷️ Katalog Produk POS & Pemesanan
+             Katalog Produk POS & Pemesanan
           </h2>
         </div>
 

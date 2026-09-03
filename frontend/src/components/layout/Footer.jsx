@@ -56,7 +56,7 @@ export default function Footer() {
           v2.4.0
         </span>
         <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)' }}>
-          ☎ {storePhone}
+           {storePhone}
         </span>
       </div>
 

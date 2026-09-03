@@ -53,7 +53,7 @@ export default function PaymentMethodsModule() {
             <span className="badge badge-success">{methods.filter(m => m.isActive).length} Aktif</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            💰 Gateway & Metode Pembayaran POS
+             Gateway & Metode Pembayaran POS
           </h2>
         </div>
       </div>

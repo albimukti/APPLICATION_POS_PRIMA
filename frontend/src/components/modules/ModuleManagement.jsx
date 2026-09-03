@@ -83,7 +83,7 @@ export default function ModuleManagement() {
               <span className="badge badge-success">Admin Control Center</span>
             </div>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
-              🎛️ Dashboard Manajemen Modul
+               Dashboard Manajemen Modul
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, maxWidth: '700px' }}>
               Kontrol aktivasi 16 modul sistem POS secara modular. Nonaktifkan modul dengan konfirmasi & otomatis backup data snapshot, validasi dependensi, dan catat riwayat log history.
@@ -353,7 +353,7 @@ export default function ModuleManagement() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', width: '100%', maxWidth: '800px', marginTop: '12px' }}>
               {/* Left: Aktifkan Modul */}
               <div style={{ padding: '18px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <h4 style={{ color: '#34d399', fontWeight: 800, margin: '0 0 8px 0' }}>✅ AKTIFKAN MODUL</h4>
+                <h4 style={{ color: '#34d399', fontWeight: 800, margin: '0 0 8px 0' }}> AKTIFKAN MODUL</h4>
                 <ol style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', paddingLeft: '18px', lineHeight: '1.6' }}>
                   <li>Pilih modul yang berstatus nonaktif</li>
                   <li>Klik tombol <b>[Aktifkan Modul]</b></li>
@@ -365,7 +365,7 @@ export default function ModuleManagement() {
 
               {/* Right: Nonaktifkan Modul */}
               <div style={{ padding: '18px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.08)', border: '1px solid rgba(244, 63, 94, 0.3)' }}>
-                <h4 style={{ color: '#fb7185', fontWeight: 800, margin: '0 0 8px 0' }}>❌ NONAKTIFKAN MODUL</h4>
+                <h4 style={{ color: '#fb7185', fontWeight: 800, margin: '0 0 8px 0' }}> NONAKTIFKAN MODUL</h4>
                 <ol style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', paddingLeft: '18px', lineHeight: '1.6' }}>
                   <li>Pilih modul aktif yang ingin dinonaktifkan</li>
                   <li>Klik tombol <b>[Nonaktifkan Modul]</b></li>
@@ -395,10 +395,10 @@ export default function ModuleManagement() {
               </p>
               <div style={{ fontSize: '0.8125rem', marginBottom: '12px' }}>
                 <div style={{ color: '#34d399', fontWeight: 600, marginBottom: '4px' }}>
-                  ✅ Aktif: 1-3, 4-8, 10-13, 15, 16
+                   Aktif: 1-3, 4-8, 10-13, 15, 16
                 </div>
                 <div style={{ color: '#fb7185', fontWeight: 600 }}>
-                  ❌ Nonaktif: 9 (Shift), 14 (Karyawan)
+                   Nonaktif: 9 (Shift), 14 (Karyawan)
                 </div>
               </div>
             </div>
@@ -424,10 +424,10 @@ export default function ModuleManagement() {
               </p>
               <div style={{ fontSize: '0.8125rem', marginBottom: '12px' }}>
                 <div style={{ color: '#34d399', fontWeight: 600, marginBottom: '4px' }}>
-                  ✅ Aktif: 1-13, 15, 16 (Semua modul operasional)
+                   Aktif: 1-13, 15, 16 (Semua modul operasional)
                 </div>
                 <div style={{ color: '#fb7185', fontWeight: 600 }}>
-                  ❌ Nonaktif: 14 (Karyawan)
+                   Nonaktif: 14 (Karyawan)
                 </div>
               </div>
             </div>
@@ -453,10 +453,10 @@ export default function ModuleManagement() {
               </p>
               <div style={{ fontSize: '0.8125rem', marginBottom: '12px' }}>
                 <div style={{ color: '#34d399', fontWeight: 600, marginBottom: '4px' }}>
-                  ✅ Aktif: 1-3, 4, 5, 7, 8, 10, 12, 13, 15, 16
+                   Aktif: 1-3, 4, 5, 7, 8, 10, 12, 13, 15, 16
                 </div>
                 <div style={{ color: '#fb7185', fontWeight: 600 }}>
-                  ❌ Nonaktif: 6 (Promo), 9 (Shift), 11 (Loyalty), 14 (Karyawan)
+                   Nonaktif: 6 (Promo), 9 (Shift), 11 (Loyalty), 14 (Karyawan)
                 </div>
               </div>
             </div>
@@ -477,7 +477,7 @@ export default function ModuleManagement() {
         <div className="glass-panel" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>
-              📜 Log Riwayat Perubahan Modul (Audit Trail)
+               Log Riwayat Perubahan Modul (Audit Trail)
             </h3>
             <span className="badge badge-indigo">{history.length} Catatan</span>
           </div>

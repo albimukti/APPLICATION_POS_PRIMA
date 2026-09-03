@@ -66,8 +66,8 @@ async function startServer() {
   await initPostgres();
   const server = app.listen(PORT, () => {
     console.log(`=================================================`);
-    console.log(`🚀 POS Backend Server berjalan di http://localhost:${PORT}`);
-    console.log(`📦 Siap melayani 16 Modul POS dengan RBAC (Admin, Kasir, Customer)`);
+    console.log(` POS Backend Server berjalan di http://localhost:${PORT}`);
+    console.log(` Siap melayani 16 Modul POS dengan RBAC (Admin, Kasir, Customer)`);
     console.log(`=================================================`);
   });
 

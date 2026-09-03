@@ -88,7 +88,7 @@ export default function LoyaltyModule() {
       {/* Membership Tiers Overview */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>
-          👑 Tingkatan Keanggotaan (Membership Tiers)
+           Tingkatan Keanggotaan (Membership Tiers)
         </h3>
         <div className="grid-responsive" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
           {tiers.map(t => (
@@ -118,7 +118,7 @@ export default function LoyaltyModule() {
       {/* Rewards Catalog */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>
-          🎁 Katalog Hadiah & Penukaran Poin
+           Katalog Hadiah & Penukaran Poin
         </h3>
 
         <div className="grid-responsive" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>

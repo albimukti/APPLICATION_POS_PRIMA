@@ -435,7 +435,7 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
                 {user?.name || 'Kasir 1'}
               </span>
               <span style={{ fontSize: '0.65rem', color: 'var(--emerald-500)', fontWeight: 800, textTransform: 'uppercase' }}>
-                {user?.role} ✏️
+                {user?.role} 
               </span>
             </div>
           </div>

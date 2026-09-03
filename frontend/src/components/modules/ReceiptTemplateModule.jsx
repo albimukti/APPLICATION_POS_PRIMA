@@ -73,7 +73,7 @@ export default function ReceiptTemplateModule() {
             <span className="badge badge-success">Thermal 58mm / 80mm</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            🧾 Kustomisasi Template Struk & Invoice
+             Kustomisasi Template Struk & Invoice
           </h2>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function ReceiptTemplateModule() {
         {/* Left: Template Form */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>
-            ⚙️ Pengaturan Teks Struk
+             Pengaturan Teks Struk
           </h3>
 
           <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -164,7 +164,7 @@ export default function ReceiptTemplateModule() {
         {/* Right: Live Preview */}
         <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>
-            👁️ Pratinjau Struk Thermal Langsung
+             Pratinjau Struk Thermal Langsung
           </h3>
 
           <div className="thermal-receipt" style={{ width: '100%', maxWidth: '340px' }}>

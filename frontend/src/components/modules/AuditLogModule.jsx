@@ -861,7 +861,7 @@ export default function AuditLogModule() {
                         </span>
                         {log.target && (
                           <span style={{ fontSize: '0.78rem', color: 'var(--emerald-500)', fontWeight: 600 }}>
-                            ➜ {log.target}
+                             {log.target}
                           </span>
                         )}
                       </div>
@@ -880,7 +880,7 @@ export default function AuditLogModule() {
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-subtle)' }}>
                       <span>IP Address: <code>{log.ip || '127.0.0.1'}</code></span>
-                      <span style={{ color: 'var(--emerald-500)', fontWeight: 700 }}>Klik untuk rincian ➜</span>
+                      <span style={{ color: 'var(--emerald-500)', fontWeight: 700 }}>Klik untuk rincian </span>
                     </div>
                   </div>
                 </div>
@@ -947,7 +947,7 @@ export default function AuditLogModule() {
                   fontWeight: 700
                 }}
               >
-                Tutup ✕
+                Tutup 
               </button>
             </div>
 
@@ -970,7 +970,7 @@ export default function AuditLogModule() {
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: 700, marginBottom: '4px' }}>JENIS AKSI & TARGET</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 800, fontFamily: 'monospace', color: 'var(--emerald-500)' }}>{selectedLog.action}</span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>➜ {selectedLog.target || '-'}</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}> {selectedLog.target || '-'}</span>
                 </div>
               </div>
 

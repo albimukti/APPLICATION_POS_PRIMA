@@ -47,23 +47,23 @@ class DataStore {
       const loaded = await dbSync.loadAllData();
       if (loaded) {
         if (loaded.users && loaded.users.length) this.users = loaded.users;
-        if (loaded.customers && loaded.customers.length) this.customers = loaded.customers;
-        if (loaded.categories && loaded.categories.length) this.categories = loaded.categories;
-        if (loaded.products && loaded.products.length) this.products = loaded.products;
+        if (loaded.customers !== undefined) this.customers = loaded.customers;
+        if (loaded.categories !== undefined) this.categories = loaded.categories;
+        if (loaded.products !== undefined) this.products = loaded.products;
         if (loaded.modules && loaded.modules.length) this.modules = loaded.modules;
-        if (loaded.history) this.history = loaded.history;
+        if (loaded.history !== undefined) this.history = loaded.history;
         if (loaded.paymentMethods && loaded.paymentMethods.length) this.paymentMethods = loaded.paymentMethods;
-        if (loaded.promos && loaded.promos.length) this.promos = loaded.promos;
-        if (loaded.loyaltyRewards && loaded.loyaltyRewards.length) this.loyaltyRewards = loaded.loyaltyRewards;
-        if (loaded.employees && loaded.employees.length) this.employees = loaded.employees;
-        if (loaded.shifts) this.shifts = loaded.shifts;
-        if (loaded.transactions) this.transactions = loaded.transactions;
-        if (loaded.notifications) this.notifications = loaded.notifications;
+        if (loaded.promos !== undefined) this.promos = loaded.promos;
+        if (loaded.loyaltyRewards !== undefined) this.loyaltyRewards = loaded.loyaltyRewards;
+        if (loaded.employees !== undefined) this.employees = loaded.employees;
+        if (loaded.shifts !== undefined) this.shifts = loaded.shifts;
+        if (loaded.transactions !== undefined) this.transactions = loaded.transactions;
+        if (loaded.notifications !== undefined) this.notifications = loaded.notifications;
         if (loaded.storeSettings) this.settings = { store: loaded.storeSettings };
-        if (loaded.inventoryLogs) this.inventoryLogs = loaded.inventoryLogs;
-        if (loaded.auditLogs && loaded.auditLogs.length) this.auditLogs = loaded.auditLogs;
-        if (loaded.approvals) this.approvals = loaded.approvals;
-        console.log(`[DataStore] ✅ 100% Sinkronisasi PostgreSQL "${loaded.products.length} Produk, ${this.users.length} Akun, ${this.customers.length} Member, ${this.modules.length} Modul" siap digunakan.`);
+        if (loaded.inventoryLogs !== undefined) this.inventoryLogs = loaded.inventoryLogs;
+        if (loaded.auditLogs !== undefined) this.auditLogs = loaded.auditLogs;
+        if (loaded.approvals !== undefined) this.approvals = loaded.approvals;
+        console.log(`[DataStore] 100% Sinkronisasi PostgreSQL "${this.products.length} Produk, ${this.users.length} Akun, ${this.customers.length} Member, ${this.modules.length} Modul" siap digunakan.`);
       }
     } catch (err) {
       console.warn('[DataStore] Database sync error:', err.message);

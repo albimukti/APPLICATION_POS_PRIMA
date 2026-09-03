@@ -307,7 +307,7 @@ export default function CartDrawer({ onOpenPayment }) {
               </div>
               {customer ? (
                 <span className="badge badge-success" style={{ fontSize: '0.625rem', padding: '2px 6px' }}>
-                  ✓ Terverifikasi
+                   Terverifikasi
                 </span>
               ) : (
                 <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
@@ -385,7 +385,7 @@ export default function CartDrawer({ onOpenPayment }) {
                       </span>
                     </div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      📱 {customer.phone} • {customer.code}
+                       {customer.phone} • {customer.code}
                     </div>
                   </div>
 
@@ -399,7 +399,7 @@ export default function CartDrawer({ onOpenPayment }) {
                     style={{ background: 'transparent', border: 'none', color: 'var(--rose-500)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, padding: '2px 4px' }}
                     title="Ganti / Lepas Pelanggan"
                   >
-                    ✕ Ganti
+                     Ganti
                   </button>
                 </div>
 

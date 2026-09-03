@@ -82,42 +82,48 @@ async function autoSeedDatabase(initialData) {
     `, [u.id, u.username, u.name, u.email, u.password, u.role, u.phone || '', u.avatar || '', u.isActive !== false]);
   }
 
-  // Customers: Ensure initial customers exist
-  for (const c of initialData.initialCustomers) {
-    await query(`
-      INSERT INTO customers (id, user_id, code, name, email, phone, address, tier, points, total_spent, transaction_count, is_active, avatar)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      ON CONFLICT (id) DO UPDATE SET
-        name = EXCLUDED.name,
-        points = EXCLUDED.points,
-        tier = EXCLUDED.tier,
-        total_spent = EXCLUDED.total_spent,
-        transaction_count = EXCLUDED.transaction_count,
-        is_active = EXCLUDED.is_active
-    `, [c.id, c.userId, c.code, c.name, c.email || '', c.phone || '', c.address || '', c.tier || 'Silver', c.points || 0, c.totalSpent || 0, c.transactionCount || 0, c.isActive !== false, c.avatar || '']);
-  }
+  // Check if database was cleansed for clean-slate testing
+  const cleanFlag = await query("SELECT value FROM system_settings WHERE key = 'database_cleansed'");
+  const isCleansed = cleanFlag.rows.length > 0;
 
-  // Categories
-  const catRes = await query('SELECT COUNT(*) FROM categories');
-  if (parseInt(catRes.rows[0]?.count || '0', 10) === 0) {
-    for (const cat of initialData.initialCategories) {
+  if (!isCleansed) {
+    // Customers: Ensure initial customers exist
+    for (const c of initialData.initialCustomers) {
       await query(`
-        INSERT INTO categories (id, name, slug, icon, color)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (id) DO NOTHING
-      `, [cat.id, cat.name, cat.slug, cat.icon, cat.color]);
+        INSERT INTO customers (id, user_id, code, name, email, phone, address, tier, points, total_spent, transaction_count, is_active, avatar)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          points = EXCLUDED.points,
+          tier = EXCLUDED.tier,
+          total_spent = EXCLUDED.total_spent,
+          transaction_count = EXCLUDED.transaction_count,
+          is_active = EXCLUDED.is_active
+      `, [c.id, c.userId, c.code, c.name, c.email || '', c.phone || '', c.address || '', c.tier || 'Silver', c.points || 0, c.totalSpent || 0, c.transactionCount || 0, c.isActive !== false, c.avatar || '']);
     }
-  }
 
-  // Products
-  const prodRes = await query('SELECT COUNT(*) FROM products');
-  if (parseInt(prodRes.rows[0]?.count || '0', 10) === 0) {
-    for (const p of initialData.initialProducts) {
-      await query(`
-        INSERT INTO products (id, sku, barcode, name, category_id, category_name, description, price, cost_price, stock, min_stock_alert, unit, image_url, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        ON CONFLICT (id) DO NOTHING
-      `, [p.id, p.sku, p.barcode, p.name, p.categoryId, p.categoryName, p.description || '', p.price, p.costPrice || 0, p.stock, p.minStockAlert || 5, p.unit || 'pcs', p.imageUrl || '', p.isActive !== false]);
+    // Categories
+    const catRes = await query('SELECT COUNT(*) FROM categories');
+    if (parseInt(catRes.rows[0]?.count || '0', 10) === 0) {
+      for (const cat of initialData.initialCategories) {
+        await query(`
+          INSERT INTO categories (id, name, slug, icon, color)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (id) DO NOTHING
+        `, [cat.id, cat.name, cat.slug, cat.icon, cat.color]);
+      }
+    }
+
+    // Products
+    const prodRes = await query('SELECT COUNT(*) FROM products');
+    if (parseInt(prodRes.rows[0]?.count || '0', 10) === 0) {
+      for (const p of initialData.initialProducts) {
+        await query(`
+          INSERT INTO products (id, sku, barcode, name, category_id, category_name, description, price, cost_price, stock, min_stock_alert, unit, image_url, is_active)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          ON CONFLICT (id) DO NOTHING
+        `, [p.id, p.sku, p.barcode, p.name, p.categoryId, p.categoryName, p.description || '', p.price, p.costPrice || 0, p.stock, p.minStockAlert || 5, p.unit || 'pcs', p.imageUrl || '', p.isActive !== false]);
+      }
     }
   }
 
@@ -148,39 +154,41 @@ async function autoSeedDatabase(initialData) {
     }
   }
 
-  // Promo Codes
-  const prRes = await query('SELECT COUNT(*) FROM promo_codes');
-  if (parseInt(prRes.rows[0]?.count || '0', 10) === 0) {
-    for (const pr of initialData.initialPromos) {
-      await query(`
-        INSERT INTO promo_codes (id, code, name, discount_type, discount_value, min_order_amount, max_discount_amount, quota, used_count, valid_from, valid_until, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (id) DO NOTHING
-      `, [pr.id, pr.code, pr.name, pr.discountType, pr.discountValue, pr.minOrderAmount, pr.maxDiscountAmount, pr.quota, pr.usedCount, pr.validFrom, pr.validUntil, pr.isActive]);
+  if (!isCleansed) {
+    // Promo Codes
+    const prRes = await query('SELECT COUNT(*) FROM promo_codes');
+    if (parseInt(prRes.rows[0]?.count || '0', 10) === 0) {
+      for (const pr of initialData.initialPromos) {
+        await query(`
+          INSERT INTO promo_codes (id, code, name, discount_type, discount_value, min_order_amount, max_discount_amount, quota, used_count, valid_from, valid_until, is_active)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          ON CONFLICT (id) DO NOTHING
+        `, [pr.id, pr.code, pr.name, pr.discountType, pr.discountValue, pr.minOrderAmount, pr.maxDiscountAmount, pr.quota, pr.usedCount, pr.validFrom, pr.validUntil, pr.isActive]);
+      }
     }
-  }
 
-  // Loyalty Rewards
-  const rewRes = await query('SELECT COUNT(*) FROM loyalty_rewards');
-  if (parseInt(rewRes.rows[0]?.count || '0', 10) === 0) {
-    for (const rew of initialData.initialLoyaltyRewards) {
-      await query(`
-        INSERT INTO loyalty_rewards (id, title, description, points_cost, reward_type, reward_value, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (id) DO NOTHING
-      `, [rew.id, rew.title, rew.description, rew.pointsCost, rew.rewardType, rew.rewardValue, rew.isActive]);
+    // Loyalty Rewards
+    const rewRes = await query('SELECT COUNT(*) FROM loyalty_rewards');
+    if (parseInt(rewRes.rows[0]?.count || '0', 10) === 0) {
+      for (const rew of initialData.initialLoyaltyRewards) {
+        await query(`
+          INSERT INTO loyalty_rewards (id, title, description, points_cost, reward_type, reward_value, is_active)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (id) DO NOTHING
+        `, [rew.id, rew.title, rew.description, rew.pointsCost, rew.rewardType, rew.rewardValue, rew.isActive]);
+      }
     }
-  }
 
-  // Employees
-  const empRes = await query('SELECT COUNT(*) FROM employees');
-  if (parseInt(empRes.rows[0]?.count || '0', 10) === 0) {
-    for (const emp of initialData.initialEmployees) {
-      await query(`
-        INSERT INTO employees (id, employee_code, name, position, department, phone, email, basic_salary, commission_rate, today_attendance, clock_in_time, clock_out_time, status, avatar, allowance, bank_account, join_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-        ON CONFLICT (id) DO NOTHING
-      `, [emp.id, emp.employeeCode, emp.name, emp.position, emp.department, emp.phone, emp.email, emp.basicSalary, emp.commissionRate, emp.todayAttendance, emp.clockInTime, emp.clockOutTime, emp.status, emp.avatar, emp.allowance || 0, emp.bankAccount || '', emp.joinDate || '']);
+    // Employees
+    const empRes = await query('SELECT COUNT(*) FROM employees');
+    if (parseInt(empRes.rows[0]?.count || '0', 10) === 0) {
+      for (const emp of initialData.initialEmployees) {
+        await query(`
+          INSERT INTO employees (id, employee_code, name, position, department, phone, email, basic_salary, commission_rate, today_attendance, clock_in_time, clock_out_time, status, avatar, allowance, bank_account, join_date)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          ON CONFLICT (id) DO NOTHING
+        `, [emp.id, emp.employeeCode, emp.name, emp.position, emp.department, emp.phone, emp.email, emp.basicSalary, emp.commissionRate, emp.todayAttendance, emp.clockInTime, emp.clockOutTime, emp.status, emp.avatar, emp.allowance || 0, emp.bankAccount || '', emp.joinDate || '']);
+      }
     }
   }
 
@@ -191,7 +199,7 @@ async function autoSeedDatabase(initialData) {
     ON CONFLICT (key) DO NOTHING
   `, ['store_settings', JSON.stringify(initialData.initialSettings.store), 'Pengaturan Utama Toko POS PRIMA']);
 
-  console.log('[DBSync] ✅ PostgreSQL database tables auto-seeded and verified successfully.');
+  console.log('[DBSync] PostgreSQL database tables auto-seeded and verified successfully.');
 }
 
 // ─────────────────────────────────────────────────────────────

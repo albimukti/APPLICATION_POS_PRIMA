@@ -402,7 +402,7 @@ export default function CustomerModule() {
             <span className="badge badge-success">{customers.length} Member Terdaftar</span>
           </div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-            👥 Direktori Pelanggan & Member POS
+             Direktori Pelanggan & Member POS
           </h2>
         </div>
 

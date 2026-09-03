@@ -94,7 +94,7 @@ function ToastPopup({ message, type = 'error', onClose }) {
       <style>{`
         @keyframes toastSlideIn {
           from { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
         }
       `}</style>
       <div
@@ -187,7 +187,7 @@ function RegisterModal({ onClose, registerType, onRegisterCustomer, onRegisterCa
         <style>{`
           @keyframes modalFadeIn {
             from { opacity: 0; transform: scale(0.96) translateY(10px); }
-            to   { opacity: 1; transform: scale(1) translateY(0); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
           }
         `}</style>
 
@@ -285,7 +285,7 @@ function RegisterModal({ onClose, registerType, onRegisterCustomer, onRegisterCa
                   {isCashier ? 'Daftar Akun Kasir' : 'Daftar Member Baru'}
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.8125rem', marginTop: '4px', margin: '4px 0 0 0' }}>
-                  {isCashier ? '⚠️ Memerlukan persetujuan Administrator sebelum aktif.' : '⏳ Memerlukan verifikasi persetujuan Kasir / Admin sebelum aktif.'}
+                  {isCashier ? ' Memerlukan persetujuan Administrator sebelum aktif.' : '⏳ Memerlukan verifikasi persetujuan Kasir / Admin sebelum aktif.'}
                 </p>
               </div>
               <button
@@ -1110,7 +1110,7 @@ export default function LoginScreen() {
                   </button>
                 </div>
                 <p style={{ fontSize: '0.72rem', color: '#D97706', margin: '4px 0 0 0' }}>
-                  ⚠️ Verifikasi aktif untuk mencegah upaya login berulang yang tidak sah.
+                   Verifikasi aktif untuk mencegah upaya login berulang yang tidak sah.
                 </p>
               </div>
             )}

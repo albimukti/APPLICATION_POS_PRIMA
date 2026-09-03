@@ -36,7 +36,7 @@ async function initializeDatabase() {
     if (checkRes.rowCount === 0) {
       console.log(`[DB Init] Database "${targetDbName}" belum ada. Membuat database "${targetDbName}"...`);
       await rootClient.query(`CREATE DATABASE "${targetDbName}"`);
-      console.log(`[DB Init] ✅ Database "${targetDbName}" berhasil dibuat!`);
+      console.log(`[DB Init] Database "${targetDbName}" berhasil dibuat!`);
     } else {
       console.log(`[DB Init] Database "${targetDbName}" sudah tersedia.`);
     }
@@ -66,7 +66,7 @@ async function initializeDatabase() {
     if (fs.existsSync(schemaPath)) {
       const schemaSql = fs.readFileSync(schemaPath, 'utf8');
       await targetClient.query(schemaSql);
-      console.log('[DB Init] ✅ Skema tabel (16 Modul POS) berhasil diimpor ke PostgreSQL.');
+      console.log('[DB Init] Skema tabel (16 Modul POS) berhasil diimpor ke PostgreSQL.');
     }
   } catch (err) {
     console.warn(`[DB Init] Catatan koneksi "${targetDbName}": ${err.message}`);

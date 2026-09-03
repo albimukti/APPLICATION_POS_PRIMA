@@ -218,7 +218,7 @@ export default function InventoryModule() {
                   <th style={{ padding: '12px' }}>Nama Produk</th>
                   <th style={{ padding: '12px' }}>Tipe Mutasi</th>
                   <th style={{ padding: '12px' }}>Jumlah</th>
-                  <th style={{ padding: '12px' }}>Stok Awal ➔ Akhir</th>
+                  <th style={{ padding: '12px' }}>Stok Awal Akhir</th>
                   <th style={{ padding: '12px' }}>Alasan / Sumber</th>
                   <th style={{ padding: '12px' }}>Petugas</th>
                 </tr>
@@ -241,7 +241,7 @@ export default function InventoryModule() {
                     <td style={{ padding: '12px', fontWeight: 800, color: log.quantity > 0 ? '#10b981' : '#f43f5e' }}>
                       {log.quantity > 0 ? `+${log.quantity}` : log.quantity}
                     </td>
-                    <td style={{ padding: '12px' }}>{log.stockBefore} ➔ {log.stockAfter}</td>
+                    <td style={{ padding: '12px' }}>{log.stockBefore} {log.stockAfter}</td>
                     <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{log.reason || '-'}</td>
                     <td style={{ padding: '12px', color: 'var(--emerald-500)', fontWeight: 600 }}>{log.createdBy}</td>
                   </tr>

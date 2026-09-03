@@ -52,7 +52,7 @@ export default function LoginModule() {
           <span className="badge badge-success">JWT + RBAC Security</span>
         </div>
         <h2 style={{ margin: '0 0 6px 0', fontSize: '1.6rem', fontWeight: 800 }}>
-          🔑 Autentikasi Pengguna & Demo Quick Switcher
+           Autentikasi Pengguna & Demo Quick Switcher
         </h2>
         <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           Pilih akun demo di bawah untuk menguji hak akses (Admin, Kasir, Customer) secara langsung.

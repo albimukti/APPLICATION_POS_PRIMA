@@ -62,7 +62,7 @@ async function initPostgres() {
           return;
         }
 
-        console.log(`[Database] ✅ Sukses terhubung ke PostgreSQL: ${poolConfig.database} (${poolConfig.host}:${poolConfig.port})`);
+        console.log(`[Database] Sukses terhubung ke PostgreSQL: ${poolConfig.database} (${poolConfig.host}:${poolConfig.port})`);
         isPostgresConnected = true;
 
         const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
@@ -71,7 +71,7 @@ async function initPostgres() {
           client.query(schemaSql, async (qErr) => {
             release();
             if (!qErr) {
-              console.log(`[Database] ✅ Skema tabel PostgreSQL "${poolConfig.database}" berhasil disinkronkan.`);
+              console.log(`[Database] Skema tabel PostgreSQL "${poolConfig.database}" berhasil disinkronkan.`);
             } else {
               console.warn(`[Database] Skema query notice:`, qErr.message);
             }
