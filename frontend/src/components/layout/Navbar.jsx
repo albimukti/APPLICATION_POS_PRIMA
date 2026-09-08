@@ -266,7 +266,7 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
 
           {showNotifications && (
             <div
-              className="glass-panel"
+              className="glass-panel notification-menu"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               style={{

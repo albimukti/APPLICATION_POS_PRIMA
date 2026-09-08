@@ -171,7 +171,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onToggle }) {
   const categories = getCategoriesForRole();
 
   return (
-    <aside className="app-sidebar" style={{
+    <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`} style={{
       width: isOpen ? '275px' : '0px',
       opacity: isOpen ? 1 : 0,
       background: 'var(--bg-secondary)',

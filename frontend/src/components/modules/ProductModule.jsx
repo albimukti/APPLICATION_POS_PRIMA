@@ -314,7 +314,7 @@ export default function ProductModule() {
   });
 
   return (
-    <div style={{
+    <div className="product-module-shell" style={{
       display: 'flex',
       gap: '18px',
       height: 'calc(100vh - 145px)',
