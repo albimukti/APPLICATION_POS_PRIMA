@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -31,6 +31,7 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
   const { settings } = useSettings();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const notificationMenuRef = useRef(null);
 
   const appName = settings?.store?.appName || 'POS PRIMA';
   const appSubtitle = settings?.store?.appSubtitle || 'Sistem Kasir 16 Modul';
@@ -60,6 +61,19 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
     const interval = setInterval(fetchNotifs, 12000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!showNotifications) return undefined;
+
+    const handleOutsideNotificationClick = (event) => {
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideNotificationClick);
+    return () => document.removeEventListener('mousedown', handleOutsideNotificationClick);
+  }, [showNotifications]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -218,9 +232,9 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
         </button>
 
         {/* Notifications Dropdown */}
-        <div style={{ position: 'relative' }}>
+        <div ref={notificationMenuRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => setShowNotifications(!showNotifications)}
+            onClick={() => setShowNotifications(prev => !prev)}
             className="btn-icon btn-secondary"
             style={{ position: 'relative', width: '36px', height: '36px' }}
             title="Notifikasi Sistem"
@@ -251,7 +265,11 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
           </button>
 
           {showNotifications && (
-            <div className="glass-panel" style={{
+            <div
+              className="glass-panel"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              style={{
               position: 'absolute',
               right: 0,
               top: '46px',
@@ -261,7 +279,8 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
               boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
               borderRadius: 'var(--radius-lg)',
               animation: 'scaleUp 0.2s ease'
-            }}>
+            }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-glass)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Bell size={15} style={{ color: 'var(--emerald-500)' }} />
@@ -269,7 +288,10 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
                 </div>
                 {unreadCount > 0 ? (
                   <button
-                    onClick={handleMarkAllRead}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAllRead();
+                    }}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -291,7 +313,10 @@ export default function Navbar({ onOpenShiftModal, setActiveTab, isSidebarOpen, 
                 {notifications.map(n => (
                   <div
                     key={n.id}
-                    onClick={() => handleMarkItemRead(n.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkItemRead(n.id);
+                    }}
                     style={{
                       padding: '9px 12px',
                       borderRadius: '8px',
