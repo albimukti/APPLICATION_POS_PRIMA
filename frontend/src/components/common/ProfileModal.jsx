@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   User,
@@ -32,6 +33,7 @@ const AVATAR_PRESETS = [
 export default function ProfileModal({ isOpen, onClose }) {
   const { user, updateProfile } = useAuth();
   const fileInputRef = useRef(null);
+  const profileCardRef = useRef(null);
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -45,6 +47,12 @@ export default function ProfileModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('upload'); // 'upload' | 'preset' | 'url'
   const [successMsg, setSuccessMsg] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && profileCardRef.current) {
+      profileCardRef.current.scrollTop = 0;
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -97,8 +105,8 @@ export default function ProfileModal({ isOpen, onClose }) {
     setAvatar(defaultAvatar);
   };
 
-  return (
-    <div style={{
+  return createPortal((
+    <div className="profile-modal-backdrop" style={{
       position: 'fixed',
       inset: 0,
       zIndex: 1000,
@@ -109,7 +117,7 @@ export default function ProfileModal({ isOpen, onClose }) {
       justifyContent: 'center',
       padding: '20px'
     }}>
-      <div style={{
+      <div ref={profileCardRef} className="profile-modal-card" style={{
         width: '100%',
         maxWidth: '560px',
         background: '#FFFFFF',
@@ -121,7 +129,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         overflowY: 'auto'
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #F1F5F9', paddingBottom: '16px' }}>
+        <div className="profile-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #F1F5F9', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#F0FDF4', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <User size={22} />
@@ -234,7 +242,7 @@ export default function ProfileModal({ isOpen, onClose }) {
           />
 
           {/* Avatar Method Switcher Tabs */}
-          <div style={{ display: 'flex', background: '#E2E8F0', borderRadius: '10px', padding: '3px', gap: '3px' }}>
+          <div className="profile-avatar-tabs" style={{ display: 'flex', background: '#E2E8F0', borderRadius: '10px', padding: '3px', gap: '3px' }}>
             <button
               type="button"
               onClick={() => setActiveTab('upload')}
@@ -289,7 +297,7 @@ export default function ProfileModal({ isOpen, onClose }) {
 
           {/* Tab Content 1: Upload */}
           {activeTab === 'upload' && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div className="profile-upload-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -362,7 +370,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         {/* ── USER DETAILS FORM ── */}
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Role & Username info row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="profile-account-summary" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={{ background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
               <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#64748B', display: 'block', textTransform: 'uppercase' }}>USERNAME (LOGIN)</span>
               <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#0F172A', fontFamily: 'monospace' }}>@{user?.username || 'user'}</span>
@@ -476,7 +484,7 @@ export default function ProfileModal({ isOpen, onClose }) {
           </div>
 
           {/* Footer Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #F1F5F9' }}>
+          <div className="profile-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #F1F5F9' }}>
             <button
               type="button"
               className="btn btn-secondary"
@@ -505,5 +513,5 @@ export default function ProfileModal({ isOpen, onClose }) {
         </form>
       </div>
     </div>
-  );
+  ), document.body);
 }
