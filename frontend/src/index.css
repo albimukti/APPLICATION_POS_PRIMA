@@ -1706,6 +1706,14 @@ html, body {
 .dashboard-stock-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rose-500); box-shadow: 0 0 8px var(--rose-glow); }
 .dashboard-empty-state { display: flex; align-items: center; gap: 8px; padding: 14px 0; color: var(--emerald-600); font-size: 0.8rem; }
 
+.product-category-tabs {
+  gap: 7px !important;
+}
+
+.product-category-button {
+  min-height: 54px;
+}
+
 @media (max-width: 900px) {
   .dashboard-pulse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

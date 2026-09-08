@@ -358,7 +358,7 @@ export default function ProductModule() {
           padding: '18px 20px'
         }}>
           {/* Top Bar inside Card: + ADD NEW ITEM & Search Box */}
-          <div style={{
+          <div className="product-category-tabs" style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -696,11 +696,12 @@ export default function ProductModule() {
           }}>
             {/* "Semua" / All Category Button */}
             <button
+              className="product-category-button"
               type="button"
               onClick={() => setSelectedCat('ALL')}
               style={{
-                minWidth: '100px',
-                padding: '10px 14px',
+                minWidth: '82px',
+                padding: '6px 10px',
                 borderRadius: '12px',
                 background: '#ffffff',
                 border: selectedCat === 'ALL' ? '2px solid #00a86b' : '1px solid #e2e8f0',
@@ -709,14 +710,14 @@ export default function ProductModule() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px',
+                gap: '3px',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 boxShadow: selectedCat === 'ALL' ? '0 4px 12px rgba(0, 168, 107, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.02)'
               }}
             >
-              <ShoppingBag size={20} color={selectedCat === 'ALL' ? '#00a86b' : '#94a3b8'} />
-              <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Semua</span>
+              <ShoppingBag size={16} color={selectedCat === 'ALL' ? '#00a86b' : '#94a3b8'} />
+              <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>Semua</span>
             </button>
 
             {/* Dynamic Category Buttons */}
@@ -726,12 +727,13 @@ export default function ProductModule() {
 
               return (
                 <button
+                  className="product-category-button"
                   key={c.id}
                   type="button"
                   onClick={() => setSelectedCat(c.id)}
                   style={{
-                    minWidth: '100px',
-                    padding: '10px 14px',
+                    minWidth: '82px',
+                    padding: '6px 10px',
                     borderRadius: '12px',
                     background: '#ffffff',
                     border: isActive ? '2px solid #00a86b' : '1px solid #e2e8f0',
@@ -740,26 +742,27 @@ export default function ProductModule() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '3px',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                     boxShadow: isActive ? '0 4px 12px rgba(0, 168, 107, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.02)'
                   }}
                 >
-                  <IconComp size={20} color={isActive ? '#00a86b' : '#94a3b8'} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{c.name}</span>
+                  <IconComp size={16} color={isActive ? '#00a86b' : '#94a3b8'} />
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{c.name}</span>
                 </button>
               );
             })}
 
             {/* + Kategori Button to type new category */}
             <button
+              className="product-category-button product-category-add"
               type="button"
               onClick={() => setIsCategoryModalOpen(true)}
               title="Tambah Kategori Baru (Ketik Sendiri)"
               style={{
-                minWidth: '95px',
-                padding: '10px 12px',
+                minWidth: '82px',
+                padding: '6px 10px',
                 borderRadius: '12px',
                 background: '#ffffff',
                 border: '1.5px dashed #cbd5e1',
@@ -768,13 +771,13 @@ export default function ProductModule() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px',
+                gap: '3px',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Plus size={20} color="#64748b" />
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, whiteSpace: 'nowrap' }}>+ Kategori</span>
+              <Plus size={16} color="#64748b" />
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>+ Kategori</span>
             </button>
           </div>
 
