@@ -10,6 +10,7 @@ import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
 import Modal from './components/common/Modal';
+import LoadingScreen from './components/common/LoadingScreen';
 import LoginScreen from './components/auth/LoginScreen';
 import { formatRupiah } from './utils/formatters';
 
@@ -55,6 +56,7 @@ const allowedKeysByRole = {
 
 function AppContent() {
   const { user } = useAuth();
+  const [isBooting, setIsBooting] = useState(true);
   const { isModuleActive, fetchModules } = useModules();
   const { activeShift, openShift, closeShift } = useShift();
 
@@ -73,6 +75,11 @@ function AppContent() {
   const [shiftNotes, setShiftNotes] = useState('');
   const [isSubmittingShift, setIsSubmittingShift] = useState(false);
 
+  useEffect(() => {
+    const bootTimer = window.setTimeout(() => setIsBooting(false), 950);
+    return () => window.clearTimeout(bootTimer);
+  }, []);
+
   // When user role changes (e.g. login or logout), adjust activeTab & ensure modules are up-to-date
   useEffect(() => {
     if (user) {
@@ -83,6 +90,10 @@ function AppContent() {
       }
     }
   }, [user, fetchModules]);
+
+  if (isBooting) {
+    return <LoadingScreen />;
+  }
 
   // If user is not logged in, show LoginScreen
   if (!user) {

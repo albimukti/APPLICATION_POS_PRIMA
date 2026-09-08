@@ -14,10 +14,12 @@ import {
   Smartphone,
   CheckCircle2,
   Receipt,
-  ArrowRight
+  ArrowRight,
+  LoaderCircle,
+  ShieldCheck
 } from 'lucide-react';
 
-export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overrideTotal }) {
+export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overrideTotal, overrideDiscountAmount, overridePromoCode }) {
   const {
     items,
     customer,
@@ -35,11 +37,14 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
   const { user } = useAuth();
   // Use overridden total if provided to ensure consistent checkout amount across payment methods
   const displayedTotal = typeof overrideTotal === 'number' ? overrideTotal : totalAmount;
+  const displayedDiscountAmount = typeof overrideDiscountAmount === 'number' ? overrideDiscountAmount : totalDiscount;
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState('CASH');
   const [cashGiven, setCashGiven] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [paymentCountdown, setPaymentCountdown] = useState(60);
+  const [paymentResult, setPaymentResult] = useState(null);
   // QR code zoom toggle
   const [isQrZoomed, setIsQrZoomed] = useState(false);
 
@@ -73,6 +78,37 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
   const changeAmount = selectedMethod === 'CASH' ? Math.max(0, cashAmount - displayedTotal) : 0;
   const isCashInsufficient = selectedMethod === 'CASH' && cashAmount < displayedTotal;
 
+  const completeSuccessfulPayment = (transaction) => {
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+
+    clearCart();
+    onClose();
+    onSuccessPayment(transaction);
+    setIsSubmitting(false);
+    setPaymentResult(null);
+  };
+
+  useEffect(() => {
+    if (!isSubmitting || selectedMethod === 'CASH') return undefined;
+
+    if (paymentCountdown <= 0) {
+      if (paymentResult?.success) {
+        completeSuccessfulPayment(paymentResult.transaction);
+      }
+      return undefined;
+    }
+
+    const countdownTimer = window.setInterval(() => {
+      setPaymentCountdown(prev => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => window.clearInterval(countdownTimer);
+  }, [isSubmitting, paymentCountdown, paymentResult]);
+
   // Preset cash buttons
   const quickCashOptions = [
     { label: 'Uang Pas', value: displayedTotal },
@@ -90,6 +126,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setPaymentCountdown(60);
+    setPaymentResult(null);
     try {
       const payload = {
         items: items.map(i => ({
@@ -106,8 +144,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
         subtotal,
         taxPercentage,
         taxAmount,
-        discountAmount: totalDiscount,
-        promoCode: promo?.promo?.code || null,
+        discountAmount: displayedDiscountAmount,
+        promoCode: overridePromoCode || promo?.promo?.code || null,
         pointsUsed: pointsToUse,
         pointsDiscount: pointsToUse * 100,
         totalAmount: displayedTotal,
@@ -118,20 +156,17 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
 
       const res = await api.createTransaction(payload);
       if (res.success) {
-        // Trigger celebratory confetti effect
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-
-        clearCart();
-        onClose();
-        onSuccessPayment(res.transaction);
+        if (selectedMethod === 'CASH') {
+          completeSuccessfulPayment(res.transaction);
+        } else {
+          setPaymentResult({ success: true, transaction: res.transaction });
+        }
+      } else {
+        setErrorMessage(res.message || 'Pembayaran tidak berhasil diproses');
+        setIsSubmitting(false);
       }
     } catch (err) {
       setErrorMessage(err.message || 'Gagal memproses pembayaran');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -148,7 +183,24 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Proses Pembayaran & Checkout" maxWidth="640px" icon={CreditCard}>
+    <Modal isOpen={isOpen} onClose={isSubmitting && selectedMethod !== 'CASH' ? () => {} : onClose} title="Proses Pembayaran & Checkout" maxWidth="640px" icon={CreditCard}>
+      {isSubmitting && selectedMethod !== 'CASH' ? (
+        <div className="payment-loading-screen" role="status" aria-live="polite">
+          <div className="payment-loading-screen__orb payment-loading-screen__orb--one" />
+          <div className="payment-loading-screen__orb payment-loading-screen__orb--two" />
+          <div className="payment-loading-screen__icon">
+            {paymentResult?.success ? <ShieldCheck size={38} /> : <LoaderCircle size={38} className="payment-loading-screen__spinner" />}
+          </div>
+          <p className="payment-loading-screen__eyebrow">POS PRIMA SECURE PAYMENT</p>
+          <h3>{paymentResult?.success ? 'Pembayaran terverifikasi' : 'Memproses pembayaran'}</h3>
+          <p className="payment-loading-screen__message">
+            {paymentResult?.success ? 'Transaksi akan diselesaikan otomatis.' : 'Jangan tutup halaman ini selama proses berlangsung.'}
+          </p>
+          <div className="payment-loading-screen__timer">00:{String(paymentCountdown).padStart(2, '0')}</div>
+          <div className="payment-loading-screen__track"><div style={{ width: `${((60 - paymentCountdown) / 60) * 100}%` }} /></div>
+          <span className="payment-loading-screen__secure"><ShieldCheck size={14} /> Koneksi pembayaran aman</span>
+        </div>
+      ) : (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Total Bill Display */}
         <div style={{
@@ -361,6 +413,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
           </button>
         </div>
       </div>
+      )}
     </Modal>
   );
 }

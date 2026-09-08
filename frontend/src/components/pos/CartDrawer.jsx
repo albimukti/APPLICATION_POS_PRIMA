@@ -60,6 +60,7 @@ export default function CartDrawer({ onOpenPayment }) {
 
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoError, setPromoError] = useState(null);
+  const [quantityDrafts, setQuantityDrafts] = useState({});
   const [customersList, setCustomersList] = useState([]);
   const [showHoldList, setShowHoldList] = useState(false);
 
@@ -159,6 +160,26 @@ export default function CartDrawer({ onOpenPayment }) {
     } catch (err) {
       setPromoError(err.message || 'Kode promo tidak valid');
     }
+  };
+
+  const handleQuantityChange = (itemId, value) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    setQuantityDrafts(prev => ({ ...prev, [itemId]: digitsOnly }));
+  };
+
+  const handleQuantityCommit = (itemId) => {
+    const draft = quantityDrafts[itemId];
+    if (!draft) {
+      removeItem(itemId);
+    } else {
+      updateQuantity(itemId, Number(draft));
+    }
+
+    setQuantityDrafts(prev => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
   };
 
   const handleQuickRegisterSubmit = async (e) => {
@@ -471,7 +492,10 @@ export default function CartDrawer({ onOpenPayment }) {
                   <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-tertiary)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border-glass)' }}>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => {
+                        setQuantityDrafts(prev => ({ ...prev, [item.id]: String(Math.max(1, item.quantity - 1)) }));
+                        updateQuantity(item.id, item.quantity - 1);
+                      }}
                       style={{
                         width: '28px',
                         height: '28px',
@@ -491,12 +515,44 @@ export default function CartDrawer({ onOpenPayment }) {
                     >
                       <Minus size={13} />
                     </button>
-                    <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                      {item.quantity}
-                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={quantityDrafts[item.id] ?? item.quantity}
+                      onFocus={(e) => {
+                        if (quantityDrafts[item.id] === undefined) {
+                          setQuantityDrafts(prev => ({ ...prev, [item.id]: String(item.quantity) }));
+                        }
+                        e.currentTarget.select();
+                      }}
+                      onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                      onBlur={() => handleQuantityCommit(item.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      aria-label={`Jumlah ${item.name}`}
+                      style={{
+                        width: '36px',
+                        height: '28px',
+                        padding: '0 2px',
+                        border: '1px solid var(--emerald-500)',
+                        borderRadius: '6px',
+                        outline: 'none',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-main)',
+                        textAlign: 'center',
+                        fontSize: '0.875rem',
+                        fontWeight: 800
+                      }}
+                    />
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => {
+                        setQuantityDrafts(prev => ({ ...prev, [item.id]: String(item.quantity + 1) }));
+                        updateQuantity(item.id, item.quantity + 1);
+                      }}
                       style={{
                         width: '28px',
                         height: '28px',

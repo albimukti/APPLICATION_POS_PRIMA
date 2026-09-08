@@ -1195,6 +1195,7 @@ class DataStore {
       points: parseInt(data.points, 10) || 0,
       totalSpent: 0,
       transactionCount: 0,
+      isActive: true,
       createdAt: new Date().toISOString()
     };
     this.customers.push(newCust);

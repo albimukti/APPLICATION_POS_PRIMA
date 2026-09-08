@@ -25,6 +25,35 @@ router.post('/login', (req, res) => {
       return matchUsername || matchEmail || matchPhone;
     });
 
+    // Customers created from the member/contact list may not have a user account yet.
+    // Allow an active customer to use the registered phone number as both identifier and password.
+    if (candidates.length === 0) {
+      const contactCustomer = dataStore.customers.find(c => {
+        const customerPhone = (c.phone || '').replace(/\D/g, '');
+        return customerPhone && customerPhone === cleanIdPhone;
+      });
+
+      const contactPassword = (password || '').replace(/\D/g, '');
+      if (
+        contactCustomer &&
+        contactCustomer.isActive !== false &&
+        contactPassword &&
+        contactPassword === cleanIdPhone
+      ) {
+        candidates.push({
+          id: `usr-${contactCustomer.id}`,
+          username: contactCustomer.phone,
+          name: contactCustomer.name,
+          email: contactCustomer.email || `${cleanIdPhone}@customer.id`,
+          password: contactCustomer.phone,
+          role: 'customer',
+          phone: contactCustomer.phone,
+          isActive: true,
+          avatar: contactCustomer.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanIdPhone}`
+        });
+      }
+    }
+
     if (candidates.length === 0) {
       return res.status(401).json({ success: false, message: 'Akun tidak ditemukan. Periksa username atau nomor telepon Anda.' });
     }

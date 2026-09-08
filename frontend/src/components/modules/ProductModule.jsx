@@ -57,7 +57,11 @@ export default function ProductModule() {
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('ALL');
-  const [discountPercent, setDiscountPercent] = useState(0);
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [quantityDrafts, setQuantityDrafts] = useState({});
 
   // Micro-animation click feedback state
   const [activeClickId, setActiveClickId] = useState(null);
@@ -68,6 +72,63 @@ export default function ProductModule() {
     setTimeout(() => {
       setActiveClickId(prev => (prev === p.id ? null : prev));
     }, 420);
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setIsApplyingPromo(true);
+    setPromoError(null);
+    try {
+      const res = await api.validatePromo(promoCode.trim(), subtotal);
+      if (res.success && res.valid !== false) {
+        setAppliedPromo(res);
+        setPromoCode(res.promo?.code || promoCode.trim().toUpperCase());
+      } else {
+        setAppliedPromo(null);
+        setPromoError(res.message || 'Kode promo tidak valid');
+      }
+    } catch (err) {
+      setAppliedPromo(null);
+      setPromoError(err.message || 'Kode promo tidak valid');
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode('');
+    setAppliedPromo(null);
+    setPromoError(null);
+  };
+
+  useEffect(() => {
+    if (items.length === 0 && appliedPromo) {
+      setPromoCode('');
+      setAppliedPromo(null);
+      setPromoError(null);
+    }
+  }, [items.length, appliedPromo]);
+
+  const handleQuantityChange = (itemId, value) => {
+    setQuantityDrafts(prev => ({
+      ...prev,
+      [itemId]: value.replace(/\D/g, '')
+    }));
+  };
+
+  const commitQuantity = (itemId) => {
+    const draft = quantityDrafts[itemId];
+    if (!draft) {
+      removeItem(itemId);
+    } else {
+      updateQuantity(itemId, Number(draft));
+    }
+
+    setQuantityDrafts(prev => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
   };
 
   // Modals
@@ -239,7 +300,7 @@ export default function ProductModule() {
     ? (settings?.store?.taxPercentage !== undefined ? parseFloat(settings.store.taxPercentage) : 11)
     : 0;
   const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-  const discountAmount = (subtotal * (parseFloat(discountPercent) || 0)) / 100;
+  const discountAmount = appliedPromo?.discountCalculated || 0;
   const taxableAmount = Math.max(0, subtotal - discountAmount);
   const taxAmount = (taxableAmount * activeTaxRate) / 100;
   const finalTotal = taxableAmount + taxAmount;
@@ -944,13 +1005,21 @@ export default function ProductModule() {
                     <Minus size={11} strokeWidth={3} />
                   </button>
                   <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      updateQuantity(item.id, isNaN(val) || val <= 0 ? 1 : val);
+                    type="text"
+                    inputMode="numeric"
+                    value={quantityDrafts[item.id] ?? item.quantity}
+                    onFocus={(e) => {
+                      if (quantityDrafts[item.id] === undefined) {
+                        setQuantityDrafts(prev => ({ ...prev, [item.id]: String(item.quantity) }));
+                      }
+                      e.currentTarget.select();
                     }}
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                    onBlur={() => commitQuantity(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur();
+                    }}
+                    aria-label={`Jumlah ${item.name}`}
                     style={{
                       width: '38px',
                       height: '24px',
@@ -1014,31 +1083,36 @@ export default function ProductModule() {
           gap: '8px',
           fontSize: '0.825rem'
         }}>
-          {/* Discount (%) Row */}
+          {/* Promotion Code Row */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'flex-start',
+            gap: '10px'
           }}>
-            <span style={{ color: '#64748b', fontWeight: 600 }}>Discount (%)</span>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={discountPercent}
-              onChange={(e) => setDiscountPercent(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-              style={{
-                width: '56px',
-                padding: '3px 6px',
-                textAlign: 'center',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.825rem',
-                fontWeight: 700,
-                outline: 'none',
-                color: '#1e293b'
-              }}
-            />
+            <span style={{ color: '#64748b', fontWeight: 600, paddingTop: '7px' }}>Kode Promosi</span>
+            <div style={{ display: 'flex', flex: 1, maxWidth: '220px', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '5px' }}>
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setAppliedPromo(null);
+                  setPromoError(null);
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyPromo(); }}
+                placeholder="Masukkan kode promo"
+                disabled={Boolean(appliedPromo) || isApplyingPromo}
+                style={{ flex: 1, minWidth: '130px', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.78rem', fontWeight: 700, outline: 'none', color: '#1e293b' }}
+              />
+              {appliedPromo ? (
+                <button type="button" onClick={handleRemovePromo} style={{ padding: '5px 8px', border: 'none', borderRadius: '6px', color: '#dc2626', background: '#fee2e2', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700 }}>Hapus</button>
+              ) : (
+                <button type="button" onClick={handleApplyPromo} disabled={!promoCode.trim() || isApplyingPromo} style={{ padding: '5px 8px', border: 'none', borderRadius: '6px', color: '#ffffff', background: '#00a86b', cursor: promoCode.trim() ? 'pointer' : 'not-allowed', fontSize: '0.72rem', fontWeight: 700 }}>{isApplyingPromo ? '...' : 'Pakai'}</button>
+              )}
+              {promoError && <small style={{ width: '100%', color: '#dc2626', textAlign: 'right', fontSize: '0.7rem' }}>{promoError}</small>}
+              {appliedPromo && <small style={{ width: '100%', color: '#00a86b', textAlign: 'right', fontSize: '0.7rem' }}>Promo aktif: {formatRupiah(discountAmount)}</small>}
+            </div>
           </div>
 
           {/* Subtotal */}
@@ -1353,6 +1427,8 @@ export default function ProductModule() {
         onClose={() => setIsPaymentOpen(false)}
         onSuccessPayment={(trx) => setCompletedTrx(trx)}
         overrideTotal={finalTotal}
+        overrideDiscountAmount={discountAmount}
+        overridePromoCode={appliedPromo?.promo?.code || appliedPromo?.code || null}
       />
 
       <ReceiptModal

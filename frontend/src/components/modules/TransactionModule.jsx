@@ -20,6 +20,7 @@ import {
   XCircle,
   FileText,
   ShoppingCart
+  ,CalendarDays
 } from 'lucide-react';
 
 export default function TransactionModule() {
@@ -34,6 +35,8 @@ export default function TransactionModule() {
   // History state
   const [transactions, setTransactions] = useState([]);
   const [historySearch, setHistorySearch] = useState('');
+  const [historyStartDate, setHistoryStartDate] = useState('');
+  const [historyEndDate, setHistoryEndDate] = useState('');
   const [voidTrxTarget, setVoidTrxTarget] = useState(null);
   const [voidReason, setVoidReason] = useState('');
   const [isVoiding, setIsVoiding] = useState(false);
@@ -87,11 +90,23 @@ export default function TransactionModule() {
     }
   };
 
-  const filteredHistory = transactions.filter(t =>
-    t.invoiceNumber.toLowerCase().includes(historySearch.toLowerCase()) ||
-    (t.customerName && t.customerName.toLowerCase().includes(historySearch.toLowerCase())) ||
-    t.paymentMethod.toLowerCase().includes(historySearch.toLowerCase())
-  );
+  const filteredHistory = transactions.filter(t => {
+    const searchMatch =
+      t.invoiceNumber.toLowerCase().includes(historySearch.toLowerCase()) ||
+      (t.customerName && t.customerName.toLowerCase().includes(historySearch.toLowerCase())) ||
+      t.paymentMethod.toLowerCase().includes(historySearch.toLowerCase());
+    const transactionDate = new Date(t.createdAt);
+    const startDate = historyStartDate ? new Date(`${historyStartDate}T00:00:00`) : null;
+    const endDate = historyEndDate ? new Date(`${historyEndDate}T23:59:59.999`) : null;
+
+    return searchMatch &&
+      (!startDate || transactionDate >= startDate) &&
+      (!endDate || transactionDate <= endDate);
+  });
+
+  const totalFilteredSales = filteredHistory
+    .filter(trx => trx.status === 'COMPLETED')
+    .reduce((sum, trx) => sum + (Number(trx.totalAmount) || 0), 0);
 
   return (
     <div style={{
@@ -150,9 +165,58 @@ export default function TransactionModule() {
                 onChange={(e) => setHistorySearch(e.target.value)}
               />
             </div>
-            <button onClick={loadTransactions} className="btn btn-secondary">
-              Refresh Data
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700 }}>
+                <CalendarDays size={15} /> Mulai
+                <input
+                  type="date"
+                  className="form-input"
+                  value={historyStartDate}
+                  onChange={(e) => setHistoryStartDate(e.target.value)}
+                  aria-label="Tanggal mulai transaksi"
+                  style={{ width: '145px', padding: '7px 9px', fontSize: '0.78rem' }}
+                />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700 }}>
+                Sampai
+                <input
+                  type="date"
+                  className="form-input"
+                  value={historyEndDate}
+                  min={historyStartDate || undefined}
+                  onChange={(e) => setHistoryEndDate(e.target.value)}
+                  aria-label="Tanggal akhir transaksi"
+                  style={{ width: '145px', padding: '7px 9px', fontSize: '0.78rem' }}
+                />
+              </label>
+              {(historyStartDate || historyEndDate || historySearch) && (
+                <button
+                  onClick={() => {
+                    setHistoryStartDate('');
+                    setHistoryEndDate('');
+                    setHistorySearch('');
+                  }}
+                  className="btn btn-secondary"
+                  style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                >
+                  Reset
+                </button>
+              )}
+              <button onClick={loadTransactions} className="btn btn-secondary" style={{ padding: '7px 10px', fontSize: '0.78rem' }}>
+                Refresh Data
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px' }}>
+            <div style={{ padding: '14px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700 }}>TOTAL PENJUALAN</div>
+              <div style={{ marginTop: '4px', color: 'var(--emerald-500)', fontSize: '1.35rem', fontWeight: 800 }}>{formatRupiah(totalFilteredSales)}</div>
+            </div>
+            <div style={{ padding: '14px 16px', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-glass)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700 }}>TRANSAKSI DITAMPILKAN</div>
+              <div style={{ marginTop: '4px', color: 'var(--text-main)', fontSize: '1.35rem', fontWeight: 800 }}>{filteredHistory.length}</div>
+            </div>
           </div>
 
           {/* Transactions Table */}
