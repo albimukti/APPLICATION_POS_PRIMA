@@ -26,3 +26,13 @@ export function formatNumber(num) {
   if (num === undefined || num === null || isNaN(num)) return '0';
   return new Intl.NumberFormat('id-ID').format(num);
 }
+
+export function formatInputNumber(value) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
+}
+
+export function parseInputNumber(value) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  return digits ? Number(digits) : 0;
+}

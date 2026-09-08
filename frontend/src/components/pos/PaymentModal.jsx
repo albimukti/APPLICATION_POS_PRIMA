@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { formatRupiah } from '../../utils/formatters';
+import { formatRupiah, formatInputNumber, parseInputNumber } from '../../utils/formatters';
 import confetti from 'canvas-confetti';
 import {
   Banknote,
@@ -69,12 +69,12 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
     }
     if (isOpen) {
       loadMethods();
-      setCashGiven(String(displayedTotal));
+      setCashGiven(formatInputNumber(displayedTotal));
       setErrorMessage(null);
     }
   }, [isOpen, totalAmount]);
 
-  const cashAmount = parseFloat(cashGiven) || 0;
+  const cashAmount = parseInputNumber(cashGiven);
   const changeAmount = selectedMethod === 'CASH' ? Math.max(0, cashAmount - displayedTotal) : 0;
   const isCashInsufficient = selectedMethod === 'CASH' && cashAmount < displayedTotal;
 
@@ -269,8 +269,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccessPayment, overri
                 type="number"
                 className="form-input"
                 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--emerald-500)' }}
-                value={cashGiven}
-                onChange={(e) => setCashGiven(e.target.value)}
+                  value={cashGiven}
+                  onChange={(e) => setCashGiven(formatInputNumber(e.target.value))}
                 placeholder="0"
                 autoFocus
               />

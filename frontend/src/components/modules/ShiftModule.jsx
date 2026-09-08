@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useShift } from '../../context/ShiftContext';
-import { formatRupiah, formatDate } from '../../utils/formatters';
+import { formatRupiah, formatDate, formatInputNumber, parseInputNumber } from '../../utils/formatters';
 import Modal from '../common/Modal';
 import { Clock, CheckCircle2, DollarSign, AlertCircle, Play, Square, FileText } from 'lucide-react';
 
@@ -12,7 +12,7 @@ export default function ShiftModule() {
   const [allShifts, setAllShifts] = useState([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [isCloseModal, setIsCloseModal] = useState(false);
-  const [startCashInput, setStartCashInput] = useState('500000');
+  const [startCashInput, setStartCashInput] = useState('500.000');
   const [openNotes, setOpenNotes] = useState('');
   const [actualCashInput, setActualCashInput] = useState('');
   const [closeNotes, setCloseNotes] = useState('');
@@ -36,7 +36,7 @@ export default function ShiftModule() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await openShift(startCashInput, openNotes);
+      await openShift(parseInputNumber(startCashInput), openNotes);
       setIsOpenModal(false);
       setSuccessMsg('Shift baru berhasil dibuka!');
       loadShifts();
@@ -52,7 +52,7 @@ export default function ShiftModule() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await closeShift(actualCashInput, closeNotes);
+      await closeShift(parseInputNumber(actualCashInput), closeNotes);
       setIsCloseModal(false);
       setSuccessMsg('Shift kasir berhasil ditutup dan direkonsiliasi!');
       loadShifts();
@@ -86,7 +86,7 @@ export default function ShiftModule() {
               <span>Buka Shift Kasir Baru</span>
             </button>
           ) : (
-            <button onClick={() => { setActualCashInput(String(activeShift.expectedCash)); setIsCloseModal(true); }} className="btn btn-danger" style={{ height: '40px', padding: '0 16px', borderRadius: '10px', fontWeight: 700 }}>
+            <button onClick={() => { setActualCashInput(formatInputNumber(activeShift.expectedCash)); setIsCloseModal(true); }} className="btn btn-danger" style={{ height: '40px', padding: '0 16px', borderRadius: '10px', fontWeight: 700 }}>
               <Square size={15} />
               <span>Tutup Shift Sekarang</span>
             </button>
@@ -223,11 +223,12 @@ export default function ShiftModule() {
           <div className="form-group">
             <label className="form-label">Modal Kas Awal (Starting Float):</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               required
               className="form-input"
               value={startCashInput}
-              onChange={(e) => setStartCashInput(e.target.value)}
+              onChange={(e) => setStartCashInput(formatInputNumber(e.target.value))}
               autoFocus
             />
           </div>
@@ -262,12 +263,13 @@ export default function ShiftModule() {
           <div className="form-group">
             <label className="form-label">Hasil Penghitungan Uang Fisik di Laci Kas (Actual Cash):</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               required
               className="form-input"
               style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--emerald-500)' }}
               value={actualCashInput}
-              onChange={(e) => setActualCashInput(e.target.value)}
+              onChange={(e) => setActualCashInput(formatInputNumber(e.target.value))}
               autoFocus
             />
           </div>

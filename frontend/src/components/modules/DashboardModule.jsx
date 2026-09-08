@@ -17,34 +17,69 @@ import {
   Store,
   CreditCard,
   ShieldAlert,
-  FileCheck
+  FileCheck,
+  PackageSearch,
+  UserPlus,
+  BellRing,
+  RefreshCw,
+  CalendarDays,
+  WalletCards
 } from 'lucide-react';
 
 export default function DashboardModule({ setActiveTab }) {
   const { user } = useAuth();
   const { modules, stats } = useModules();
   const [summary, setSummary] = useState(null);
+  const [operations, setOperations] = useState({ customers: 0, lowStock: [], pendingApprovals: 0, activeShifts: 0 });
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  const loadDashboard = async () => {
+    setLoading(true);
+    try {
+      const [summaryRes, customersRes, productsRes, approvalsRes, shiftsRes] = await Promise.allSettled([
+        api.getReportSummary(),
+        api.getCustomers(),
+        api.getProducts(),
+        api.getApprovals(),
+        api.getAllShifts()
+      ]);
+
+      if (summaryRes.status === 'fulfilled' && summaryRes.value.success) {
+        setSummary(summaryRes.value.summary);
+      }
+
+      const customers = customersRes.status === 'fulfilled' ? customersRes.value : {};
+      const products = productsRes.status === 'fulfilled' ? productsRes.value : {};
+      const approvals = approvalsRes.status === 'fulfilled' ? approvalsRes.value : {};
+      const shifts = shiftsRes.status === 'fulfilled' ? shiftsRes.value : {};
+      const productList = products.products || [];
+      const shiftList = shifts.shifts || [];
+
+      setOperations({
+        customers: customers.count ?? (customers.customers || []).length,
+        lowStock: productList.filter(product => Number(product.stock) <= Number(product.minStockAlert ?? 5)).slice(0, 5),
+        pendingApprovals: (approvals.approvals || []).filter(approval => approval.status === 'PENDING').length,
+        activeShifts: shiftList.filter(shift => shift.status === 'OPEN' || shift.status === 'ACTIVE').length
+      });
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Failed to load dashboard summary:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadSummary() {
-      try {
-        setLoading(true);
-        const res = await api.getReportSummary();
-        if (res.success) setSummary(res.summary);
-      } catch (err) {
-        console.error('Failed to load dashboard summary:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadSummary();
+    loadDashboard();
   }, []);
 
   const totalRevenue = summary?.totalRevenue || 0;
   const grossProfit = summary?.grossProfit || 0;
   const totalTransactions = summary?.totalTransactions || 0;
   const totalProductsSold = summary?.totalProductsSold || 0;
+  const salesAverage = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+  const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
@@ -128,7 +163,7 @@ export default function DashboardModule({ setActiveTab }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#34d399' }}>
             <ArrowUpRight size={14} />
-            <span>+18.4% dari periode sebelumnya</span>
+            <span>{loading ? 'Memuat data terbaru...' : `Rata-rata ${formatRupiah(salesAverage)} per transaksi`}</span>
           </div>
         </div>
 
@@ -144,7 +179,7 @@ export default function DashboardModule({ setActiveTab }) {
             {formatRupiah(grossProfit)}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Margin keuntungan bersih ~38.2%
+            Margin laba kotor {profitMargin.toFixed(1)}%
           </div>
         </div>
 
@@ -176,10 +211,49 @@ export default function DashboardModule({ setActiveTab }) {
             {stats.active} / {stats.total}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {stats.inactive > 0 ? `${stats.inactive} modul nonaktif` : 'Seluruh 16 modul aktif'}
+            {stats.inactive > 0 ? `${stats.inactive} modul nonaktif` : 'Seluruh modul aktif'}
           </div>
         </div>
       </div>
+
+      {/* Admin Operations Pulse */}
+      {user?.role === 'admin' && (
+        <section className="dashboard-admin-pulse">
+          <div className="dashboard-section-heading">
+            <div>
+              <span className="dashboard-eyebrow"><CalendarDays size={14} /> Ringkasan Hari Ini</span>
+              <h3>Pantauan operasional admin</h3>
+              {lastUpdated && <small>Data diperbarui {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</small>}
+            </div>
+            <button type="button" onClick={loadDashboard} className="btn btn-secondary dashboard-refresh" disabled={loading}>
+              <RefreshCw size={14} className={loading ? 'spin-icon' : ''} />
+              {loading ? 'Memuat...' : 'Perbarui'}
+            </button>
+          </div>
+          <div className="dashboard-pulse-grid">
+            <button type="button" onClick={() => setActiveTab('customers')} className="dashboard-pulse-card dashboard-pulse-card--mint">
+              <span className="dashboard-pulse-icon"><UserPlus size={18} /></span>
+              <span><strong>{formatNumber(operations.customers)}</strong><small>Member terdaftar</small></span>
+              <ArrowUpRight size={16} />
+            </button>
+            <button type="button" onClick={() => setActiveTab('approvals')} className="dashboard-pulse-card dashboard-pulse-card--amber">
+              <span className="dashboard-pulse-icon"><BellRing size={18} /></span>
+              <span><strong>{formatNumber(operations.pendingApprovals)}</strong><small>Approval menunggu</small></span>
+              <ArrowUpRight size={16} />
+            </button>
+            <button type="button" onClick={() => setActiveTab('inventory')} className="dashboard-pulse-card dashboard-pulse-card--rose">
+              <span className="dashboard-pulse-icon"><PackageSearch size={18} /></span>
+              <span><strong>{formatNumber(operations.lowStock.length)}</strong><small>Produk stok menipis</small></span>
+              <ArrowUpRight size={16} />
+            </button>
+            <button type="button" onClick={() => setActiveTab('shifts')} className="dashboard-pulse-card dashboard-pulse-card--indigo">
+              <span className="dashboard-pulse-icon"><WalletCards size={18} /></span>
+              <span><strong>{formatNumber(operations.activeShifts)}</strong><small>Shift sedang aktif</small></span>
+              <ArrowUpRight size={16} />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Middle Split: Top Selling Products & Module Quick Access */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
@@ -263,6 +337,26 @@ export default function DashboardModule({ setActiveTab }) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Low stock watchlist */}
+        <div className="glass-panel dashboard-watchlist" style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <span className="dashboard-eyebrow dashboard-eyebrow--muted"><PackageSearch size={14} /> Inventori</span>
+              <h3 style={{ margin: '4px 0 0', fontSize: '1rem', fontWeight: 700 }}>Perlu perhatian</h3>
+            </div>
+            <button onClick={() => setActiveTab('inventory')} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>Buka Stok</button>
+          </div>
+          {operations.lowStock.length > 0 ? operations.lowStock.map(product => (
+            <div key={product.id} className="dashboard-stock-row">
+              <span className="dashboard-stock-dot" />
+              <span>{product.name}</span>
+              <strong>{formatNumber(product.stock)} tersisa</strong>
+            </div>
+          )) : (
+            <div className="dashboard-empty-state"><CheckCircle2 size={18} /> Semua stok berada di level aman</div>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { formatRupiah } from '../../utils/formatters';
+import { formatRupiah, formatInputNumber, parseInputNumber } from '../../utils/formatters';
 import Modal from '../common/Modal';
 import {
   Gift, Plus, CheckCircle2, Ticket, Sparkles, Edit2, Trash2,
@@ -13,8 +13,8 @@ const EMPTY_FORM = {
   name: '',
   discountType: 'PERCENTAGE',
   discountValue: '',
-  minOrderAmount: '50000',
-  maxDiscountAmount: '25000',
+  minOrderAmount: '50.000',
+  maxDiscountAmount: '25.000',
   quota: '100',
   validFrom: new Date().toISOString().slice(0, 10),
   validUntil: '2026-12-31',
@@ -33,9 +33,9 @@ function PromoFormModal({ isOpen, onClose, onSuccess, initialData }) {
           code: initialData.code || '',
           name: initialData.name || '',
           discountType: initialData.discountType || 'PERCENTAGE',
-          discountValue: String(initialData.discountValue ?? ''),
-          minOrderAmount: String(initialData.minOrderAmount ?? '50000'),
-          maxDiscountAmount: String(initialData.maxDiscountAmount ?? '25000'),
+          discountValue: initialData.discountType === 'FIXED' ? formatInputNumber(initialData.discountValue ?? '') : String(initialData.discountValue ?? ''),
+          minOrderAmount: formatInputNumber(initialData.minOrderAmount ?? '50000'),
+          maxDiscountAmount: formatInputNumber(initialData.maxDiscountAmount ?? '25000'),
           quota: String(initialData.quota ?? '100'),
           validFrom: initialData.validFrom ? initialData.validFrom.slice(0, 10) : new Date().toISOString().slice(0, 10),
           validUntil: initialData.validUntil ? initialData.validUntil.slice(0, 10) : '2026-12-31',
@@ -56,6 +56,9 @@ function PromoFormModal({ isOpen, onClose, onSuccess, initialData }) {
     try {
       const payload = {
         ...formData,
+        discountValue: formData.discountType === 'FIXED' ? parseInputNumber(formData.discountValue) : formData.discountValue,
+        minOrderAmount: parseInputNumber(formData.minOrderAmount),
+        maxDiscountAmount: parseInputNumber(formData.maxDiscountAmount),
         validFrom: new Date(formData.validFrom).toISOString(),
         validUntil: new Date(formData.validUntil + 'T23:59:59').toISOString(),
       };
@@ -117,22 +120,22 @@ function PromoFormModal({ isOpen, onClose, onSuccess, initialData }) {
           </div>
           <div className="form-group">
             <label className="form-label">Nilai Diskon {formData.discountType === 'PERCENTAGE' ? '(%)' : '(Rp)'}:</label>
-            <input type="number" required min="0" className="form-input"
+            <input type={formData.discountType === 'FIXED' ? 'text' : 'number'} inputMode={formData.discountType === 'FIXED' ? 'numeric' : undefined} required min="0" className="form-input"
               placeholder={formData.discountType === 'PERCENTAGE' ? 'Misal: 20' : 'Misal: 20000'}
-              value={formData.discountValue} onChange={e => set('discountValue', e.target.value)} />
+              value={formData.discountValue} onChange={e => set('discountValue', formData.discountType === 'FIXED' ? formatInputNumber(e.target.value) : e.target.value)} />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div className="form-group">
             <label className="form-label">Minimal Belanja (Rp):</label>
-            <input type="number" min="0" className="form-input" value={formData.minOrderAmount}
-              onChange={e => set('minOrderAmount', e.target.value)} />
+            <input type="text" inputMode="numeric" min="0" className="form-input" value={formData.minOrderAmount}
+              onChange={e => set('minOrderAmount', formatInputNumber(e.target.value))} />
           </div>
           <div className="form-group">
             <label className="form-label">Maks. Diskon (Rp):</label>
-            <input type="number" min="0" className="form-input" placeholder="0 = tidak dibatasi"
-              value={formData.maxDiscountAmount} onChange={e => set('maxDiscountAmount', e.target.value)} />
+            <input type="text" inputMode="numeric" min="0" className="form-input" placeholder="0 = tidak dibatasi"
+              value={formData.maxDiscountAmount} onChange={e => set('maxDiscountAmount', formatInputNumber(e.target.value))} />
           </div>
         </div>
 

@@ -3,7 +3,7 @@ import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../context/SettingsContext';
-import { formatRupiah } from '../../utils/formatters';
+import { formatRupiah, formatInputNumber, parseInputNumber } from '../../utils/formatters';
 import Modal from '../common/Modal';
 import PaymentModal from '../pos/PaymentModal';
 import ReceiptModal from '../pos/ReceiptModal';
@@ -205,8 +205,8 @@ export default function ProductModule() {
       sku: p.sku || '',
       barcode: p.barcode || '',
       description: p.description || '',
-      price: String(p.price || 0),
-      costPrice: String(p.costPrice || 0),
+      price: formatInputNumber(p.price || 0),
+      costPrice: formatInputNumber(p.costPrice || 0),
       stock: String(p.stock || 0),
       minStockAlert: String(p.minStockAlert || 5),
       unit: p.unit || 'pcs',
@@ -220,10 +220,10 @@ export default function ProductModule() {
     setIsSubmitting(true);
     try {
       if (editingProduct) {
-        await api.updateProduct(editingProduct.id, formData);
+        await api.updateProduct(editingProduct.id, { ...formData, price: parseInputNumber(formData.price), costPrice: parseInputNumber(formData.costPrice) });
         setSuccessMsg(`Produk "${formData.name}" berhasil diperbarui!`);
       } else {
-        await api.createProduct(formData);
+        await api.createProduct({ ...formData, price: parseInputNumber(formData.price), costPrice: parseInputNumber(formData.costPrice) });
         setSuccessMsg(`Produk "${formData.name}" berhasil ditambahkan!`);
       }
       setIsModalOpen(false);
@@ -1259,22 +1259,24 @@ export default function ProductModule() {
               <div className="form-group">
                 <label className="form-label">Harga Modal (Rp):</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
                   className="form-input"
                   value={formData.costPrice}
-                  onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, costPrice: formatInputNumber(e.target.value) })}
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Harga Jual (Rp):</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
                   className="form-input"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, price: formatInputNumber(e.target.value) })}
                 />
               </div>
             </div>
